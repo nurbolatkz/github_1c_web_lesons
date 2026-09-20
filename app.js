@@ -112,42 +112,6 @@ React
     ],
   },
   {
-    id: "lesson-00",
-    group: "Getting started",
-    number: "00",
-    title: "Обзор курса",
-    subtitle: "Understand the course goal, stack, project rules, and delivery order.",
-    minutes: "8 мин",
-    level: "Начальный",
-    complete: true,
-    need: ["GitHub account", "Windows terminal", "Basic web project knowledge"],
-    goal: "you will understand the complete React + Python + 1C learning path.",
-    steps: [
-      {
-        title: "Learn the target architecture",
-        text: "Every project uses the same split between frontend, bridge API, and 1C business backend.",
-        code: `React frontend
-    |
-    | HTTP API
-    v
-Python bridge backend
-    |
-    | HTTP / OData / COM / file exchange / queue
-    v
-1C backend`,
-      },
-      {
-        title: "Review the lesson roadmap",
-        text: "The course starts with tools and repository setup, then moves into React, Python bridge services, 1C integration, optimization, and deployment.",
-        info: ["Tool installation", "Standard architecture", "Frontend setup", "Python bridge setup", "1C integration", "Release workflow"],
-      },
-      {
-        title: "Follow the project rules",
-        text: "Use branches, document decisions, keep credentials out of the browser, and let the Python bridge normalize data from 1C.",
-      },
-    ],
-  },
-  {
     id: "lesson-01",
     group: "Getting started",
     number: "01",
