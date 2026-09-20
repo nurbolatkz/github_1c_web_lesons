@@ -1,12 +1,19 @@
+const GROUP_LABELS = {
+  Overview: "Обзор",
+  "Getting started": "Начало",
+  "Build with AI": "Работа с AI",
+  "Connect to 1C": "Интеграция с 1C",
+};
+
 const lessons = [
   {
     id: "project-overview",
     group: "Overview",
     number: "OV",
-    title: "Project overview",
+    title: "Обзор проекта",
     subtitle: "Простой CRUD от 1C до production: React, FastAPI, SQL-сессии и Linux.",
-    minutes: "12 min",
-    level: "Overview",
+    minutes: "12 мин",
+    level: "Обзор",
     complete: true,
     need: ["Опыт разработки в 1C", "Git и GitHub", "Windows для разработки", "Linux для production"],
     goal: "вы поймёте основной маршрут курса: 1C HTTP-сервис, FastAPI, SQL-сессии, React CRUD и выпуск на Linux.",
@@ -108,10 +115,10 @@ React
     id: "lesson-00",
     group: "Getting started",
     number: "00",
-    title: "Course overview",
+    title: "Обзор курса",
     subtitle: "Understand the course goal, stack, project rules, and delivery order.",
-    minutes: "8 min",
-    level: "Beginner",
+    minutes: "8 мин",
+    level: "Начальный",
     complete: true,
     need: ["GitHub account", "Windows terminal", "Basic web project knowledge"],
     goal: "you will understand the complete React + Python + 1C learning path.",
@@ -214,10 +221,10 @@ Python bridge backend
     id: "lesson-02",
     group: "Getting started",
     number: "02",
-    title: "Tools & terminal",
+    title: "Инструменты и терминал",
     subtitle: "Install Git, GitHub CLI, Node.js, Python, Codex CLI, and Claude Code.",
-    minutes: "20 min",
-    level: "Beginner",
+    minutes: "20 мин",
+    level: "Начальный",
     complete: true,
     need: ["PowerShell", "Internet connection", "Administrator install permission"],
     goal: "your machine will be ready for React, Python, GitHub, Codex, and Claude workflows.",
@@ -249,10 +256,10 @@ claude doctor`,
     id: "lesson-03",
     group: "Getting started",
     number: "03",
-    title: "First GitHub repository",
+    title: "Первый репозиторий GitHub",
     subtitle: "Create a repository, save your work, and push your first commit.",
-    minutes: "15 min",
-    level: "Beginner",
+    minutes: "15 мин",
+    level: "Начальный",
     complete: false,
     need: ["Git installed", "GitHub account", "GitHub CLI"],
     goal: "your project will be on GitHub.",
@@ -286,10 +293,10 @@ git push -u origin main`,
     id: "lesson-04",
     group: "Getting started",
     number: "04",
-    title: "Publish with GitHub Pages",
+    title: "Публикация на GitHub Pages",
     subtitle: "Turn the lesson repository into a public documentation website.",
-    minutes: "12 min",
-    level: "Beginner",
+    minutes: "12 мин",
+    level: "Начальный",
     complete: false,
     need: ["GitHub repository", "Main branch", "Pages permission"],
     goal: "your lessons will be accessible from a public GitHub Pages URL.",
@@ -314,10 +321,10 @@ git push -u origin main`,
     id: "lesson-05",
     group: "Build with AI",
     number: "05",
-    title: "Project structure",
+    title: "Структура проекта",
     subtitle: "Create the repeatable folders used in every React + Python + 1C project.",
-    minutes: "18 min",
-    level: "Beginner",
+    minutes: "18 мин",
+    level: "Начальный",
     complete: false,
     need: ["Git branch", "Project folder", "Terminal"],
     goal: "your repository will have the standard architecture for all future projects.",
@@ -351,10 +358,10 @@ New-Item bridge\\.env.example`,
     id: "lesson-06",
     group: "Build with AI",
     number: "06",
-    title: "AI coding workflow",
+    title: "Работа с AI в коде",
     subtitle: "Use Codex CLI and Claude Code with branches, reviews, and focused prompts.",
-    minutes: "16 min",
-    level: "Beginner",
+    minutes: "16 мин",
+    level: "Начальный",
     complete: false,
     need: ["Codex CLI", "Claude Code", "Clean Git status"],
     goal: "you will use AI tools without losing control of the repository.",
@@ -380,10 +387,10 @@ New-Item bridge\\.env.example`,
     id: "lesson-07",
     group: "Build with AI",
     number: "07",
-    title: "Create the frontend",
+    title: "Создание фронтенда",
     subtitle: "Scaffold a React frontend with a clean API service layer.",
-    minutes: "25 min",
-    level: "Intermediate",
+    minutes: "25 мин",
+    level: "Средний",
     complete: false,
     need: ["Node.js", "npm", "Project structure"],
     goal: "your React app will be ready to call the Python bridge API.",
@@ -411,10 +418,10 @@ npm run dev`,
     id: "lesson-08",
     group: "Build with AI",
     number: "08",
-    title: "Edit the frontend",
+    title: "Доработка фронтенда",
     subtitle: "Build predictable pages, forms, loading states, and API error states.",
-    minutes: "22 min",
-    level: "Intermediate",
+    minutes: "22 мин",
+    level: "Средний",
     complete: false,
     need: ["React app", "API contract", "Design conventions"],
     goal: "your frontend will be structured for real business workflows.",
@@ -439,10 +446,10 @@ git commit -m "Add React frontend shell"`,
     id: "lesson-09",
     group: "Connect to 1C",
     number: "09",
-    title: "Python bridge API",
+    title: "API Python-моста",
     subtitle: "Create a FastAPI service that normalizes requests between React and 1C.",
-    minutes: "30 min",
-    level: "Intermediate",
+    minutes: "30 мин",
+    level: "Средний",
     complete: false,
     need: ["Python", "Virtual environment", "FastAPI"],
     goal: "your bridge API will have a health endpoint and clear app settings.",
@@ -470,10 +477,10 @@ python -m venv .venv
     id: "lesson-10",
     group: "Connect to 1C",
     number: "10",
-    title: "Server sessions",
+    title: "Серверные сессии",
     subtitle: "Implement login with a protected cookie and SQL-backed sessions.",
-    minutes: "24 min",
-    level: "Intermediate",
+    minutes: "24 мин",
+    level: "Средний",
     complete: false,
     need: ["FastAPI app", "SQL database", "DB Browser for SQLite", "HTTPS plan"],
     goal: "you will understand where the session token lives, how expiry works, and how logout revokes access.",
@@ -525,10 +532,10 @@ COOKIE_SECURE=true`,
     id: "lesson-11",
     group: "Connect to 1C",
     number: "11",
-    title: "1C HTTP service",
+    title: "HTTP-сервис 1C",
     subtitle: "Expose controlled 1C endpoints for the Python bridge service.",
-    minutes: "28 min",
-    level: "Intermediate",
+    minutes: "28 мин",
+    level: "Средний",
     complete: false,
     need: ["1C platform", "Test database", "Published HTTP service"],
     goal: "1C will expose a controlled integration endpoint for the bridge.",
@@ -554,10 +561,10 @@ ONEC_PASSWORD=`,
     id: "lesson-12",
     group: "Connect to 1C",
     number: "12",
-    title: "Connect & release",
+    title: "Интеграция и релиз",
     subtitle: "Wire React, Python, and 1C together, then prepare the first release.",
-    minutes: "35 min",
-    level: "Intermediate",
+    minutes: "35 мин",
+    level: "Средний",
     complete: false,
     need: ["Frontend build", "Bridge server", "1C endpoint"],
     goal: "the full stack will run end to end with documented release steps.",
@@ -633,20 +640,19 @@ function groupedLessons() {
 }
 
 function renderNav() {
-  const activeLesson = currentLesson();
   const progress = getCompleted();
   const groups = groupedLessons();
   nav.innerHTML = "";
 
   if (!Object.keys(groups).length) {
-    nav.innerHTML = '<p class="empty-state">No lessons available.</p>';
+    nav.innerHTML = '<p class="empty-state">Нет доступных уроков.</p>';
     return;
   }
 
   Object.entries(groups).forEach(([group, groupLessons]) => {
     const section = document.createElement("section");
     section.className = "nav-group";
-    section.innerHTML = `<h2 class="nav-group-title">${activeLesson.group === group ? activeLesson.groupLabel || group : group}</h2>`;
+    section.innerHTML = `<h2 class="nav-group-title">${GROUP_LABELS[group] || group}</h2>`;
 
     groupLessons.forEach((lesson) => {
       const button = document.createElement("button");
@@ -675,10 +681,10 @@ function renderProgress() {
   const lesson = currentLesson();
   const progress = getCompleted();
   const completed = lessons.filter((lesson) => progress[lesson.id]).length;
-  courseTitle.textContent = lesson.ui?.courseTitle || "Course lessons";
+  courseTitle.textContent = lesson.ui?.courseTitle || "Уроки курса";
   progressLabel.textContent = lesson.ui?.progress
     ? lesson.ui.progress(completed, lessons.length)
-    : `${completed} of ${lessons.length} completed`;
+    : `${completed} из ${lessons.length} завершено`;
   progressFill.style.width = `${(completed / lessons.length) * 100}%`;
 }
 
@@ -695,9 +701,9 @@ function renderArticle() {
 
   article.innerHTML = `
     <div class="breadcrumb">
-      <span>${lesson.groupLabel || lesson.group}</span>
+      <span>${GROUP_LABELS[lesson.group] || lesson.group}</span>
       <span>/</span>
-      <span>${ui.breadcrumbLesson || "Lesson"} ${lesson.number}</span>
+      <span>${ui.breadcrumbLesson || "Урок"} ${lesson.number}</span>
     </div>
 
     <div class="meta-row">
@@ -710,7 +716,7 @@ function renderArticle() {
 
     <div class="goal-banner">
       <div class="goal-icon">${icons.target}</div>
-      <p><strong>${ui.byTheEnd || "By the end:"}</strong> ${lesson.goal}</p>
+      <p><strong>${ui.byTheEnd || "Результат урока:"}</strong> ${lesson.goal}</p>
     </div>
 
     <section class="step-list">
@@ -720,22 +726,22 @@ function renderArticle() {
     <footer class="lesson-footer">
       ${
         previous
-          ? `<button class="plain-link" type="button" data-lesson="${previous.id}">${icons.arrowLeft} ${ui.previous || "Previous lesson"}</button>`
+          ? `<button class="plain-link" type="button" data-lesson="${previous.id}">${icons.arrowLeft} ${ui.previous || "Предыдущий урок"}</button>`
           : `<span></span>`
       }
       <button class="primary-action" id="complete-button" type="button">
-        ${progress[lesson.id] ? ui.markedComplete || "Marked complete" : ui.markComplete || "Mark complete"} ${icons.arrowRight}
+        ${progress[lesson.id] ? ui.markedComplete || "Завершено" : ui.markComplete || "Отметить завершённым"} ${icons.arrowRight}
       </button>
       ${
         next
-          ? `<button class="plain-link" type="button" data-lesson="${next.id}">${ui.next || "Next lesson"} ${icons.arrowRight}</button>`
+          ? `<button class="plain-link" type="button" data-lesson="${next.id}">${ui.next || "Следующий урок"} ${icons.arrowRight}</button>`
           : ""
       }
     </footer>
   `;
 
-  tocTitle.textContent = ui.tocTitle || "On this page";
-  needsTitle.textContent = ui.needsTitle || "You will need";
+  tocTitle.textContent = ui.tocTitle || "На этой странице";
+  needsTitle.textContent = ui.needsTitle || "Понадобится";
   tocNav.innerHTML = sectionLinks;
   needList.innerHTML = lesson.need.map((item) => `<li>${icons.check}<span>${item}</span></li>`).join("");
 
@@ -844,7 +850,7 @@ function selectLesson(lessonId) {
 }
 
 function render() {
-  document.documentElement.lang = currentLesson().ui?.lang || "en";
+  document.documentElement.lang = currentLesson().ui?.lang || "ru";
   renderProgress();
   renderNav();
   renderArticle();
