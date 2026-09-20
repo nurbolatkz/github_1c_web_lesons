@@ -3498,34 +3498,397 @@ python -m uvicorn app.main:app --reload
     group: "React CRUD",
     number: "12",
     title: "React-приложение и вход",
-    subtitle: "Разверните React-фронтенд со слоем API и экраном входа.",
+    subtitle: "Разверните React-фронтенд со слоем API и экраном входа через FastAPI.",
     minutes: "28 мин",
     level: "Средний",
     complete: false,
-    need: ["Node.js", "npm", "FastAPI app"],
-    goal: "ваше React-приложение сможет вызывать Python-мост и выполнять вход пользователя.",
+    need: ["Node.js 20+", "FastAPI из предыдущих уроков", "Рабочие маршруты /api/auth/login и /api/auth/me", "Папка frontend"],
+    goal: "React будет обращаться только к FastAPI, выполнять вход через 1С и использовать серверную HttpOnly-сессию.",
     steps: [
       {
-        title: "Разверните React",
-        text: "Используйте Vite для быстрой локальной разработки.",
-        code: `npm create vite@latest frontend -- --template react
-cd frontend
+        title: "Развернуть React",
+        text: "Создайте приложение Vite внутри уже существующей папки frontend.",
+        code: `cd frontend
+
+npm create vite@latest . -- --template react
 npm install
-npm run dev`,
+npm run dev
+
+Приложение будет доступно по адресу:
+
+http://localhost:5173
+
+Если проект frontend уже создан,
+не запускайте npm create vite повторно.
+Используйте существующие файлы.`,
       },
       {
-        title: "Добавьте базовый адрес API",
-        text: "React должен обращаться к Python-мосту, а не напрямую к 1C.",
-        code: "VITE_API_BASE_URL=http://localhost:8000",
+        title: "Добавить адрес FastAPI",
+        text: "React должен обращаться к Python-мосту, а не напрямую к HTTP-сервису 1С.",
+        code: `frontend/.env.example
+
+VITE_API_BASE_URL=http://localhost:8000
+
+Создайте локальный файл:
+
+frontend/.env
+
+VITE_API_BASE_URL=http://localhost:8000
+
+Важно:
+
+- переменные Vite должны начинаться с VITE_;
+- в frontend не должно быть паролей 1С;
+- в frontend не должно быть ONEC_BASE_URL;
+- .env не добавляется в Git.`,
       },
       {
-        title: "Создайте сервисные функции",
-        text: "Держите вызовы API вне компонентов страниц, чтобы контракты было легко тестировать.",
+        title: "Создать API-клиент",
+        text: "Все HTTP-запросы вынесите из React-компонентов в отдельный сервис.",
+        code: `src/services/api.js
+
+API-клиент должен:
+
+- использовать VITE_API_BASE_URL;
+- отправлять credentials: "include";
+- поддерживать JSON;
+- не принимать произвольный URL;
+- не добавлять access token 1С;
+- обрабатывать HTTP 401;
+- возвращать понятные ошибки.
+
+Cookie-сессия передаётся браузером автоматически:
+
+fetch(url, {
+  credentials: "include"
+})`,
       },
       {
-        title: "Добавьте экран входа",
-        text: "Экран входа отправляет логин и пароль в FastAPI и сохраняет данные текущего пользователя из /api/auth/me.",
-        code: "POST /api/auth/login",
+        title: "Создать auth API",
+        text: "Опишите отдельные функции для login, текущего пользователя и logout.",
+        code: `src/services/authApi.js
+
+Методы:
+
+login(username, password)
+  POST /api/auth/login
+
+getCurrentUser()
+  GET /api/auth/me
+
+logout()
+  POST /api/auth/logout
+
+Пример login:
+
+await apiFetch("/api/auth/login", {
+  method: "POST",
+  body: JSON.stringify({
+    username,
+    password
+  })
+})
+
+Пароль используется только во время запроса.
+Не сохраняйте его в localStorage, sessionStorage
+или состоянии после завершения login.`,
+      },
+      {
+        title: "Создать экран входа",
+        text: "Форма входа отправляет credentials в FastAPI и получает безопасные данные текущего пользователя.",
+        code: `src/pages/LoginPage.jsx
+
+Поля:
+
+- Имя пользователя;
+- Пароль.
+
+Flow:
+
+1. Пользователь вводит username и password.
+2. React вызывает POST /api/auth/login.
+3. FastAPI передаёт credentials в 1С.
+4. 1С возвращает access token.
+5. FastAPI устанавливает HttpOnly cookie.
+6. React вызывает GET /api/auth/me.
+7. React сохраняет в состоянии только профиль пользователя.
+
+React не получает:
+
+- session token;
+- access token 1С;
+- пароль;
+- роль в виде локального секрета.`,
+      },
+      {
+        title: "Создать состояние авторизации",
+        text: "Состояние входа хранится только в памяти приложения. Источником истины остаётся GET /api/auth/me.",
+        code: `src/auth/AuthProvider.jsx
+
+Состояния:
+
+- loading;
+- authenticated;
+- unauthenticated;
+- currentUser;
+- error.
+
+При запуске приложения:
+
+1. Вызвать GET /api/auth/me.
+2. Если ответ 200 — показать приложение.
+3. Если ответ 401 — показать LoginPage.
+4. Если ответ 500/502/504 — показать безопасную ошибку.
+
+Не хранить session token в:
+
+- localStorage;
+- sessionStorage;
+- URL;
+- обычном React state.`,
+      },
+      {
+        title: "Обработать logout и истечение сессии",
+        text: "После logout или истечения TTL React должен очистить состояние пользователя и показать экран входа.",
+        code: `Logout:
+
+1. React вызывает POST /api/auth/logout.
+2. FastAPI устанавливает revoked_at.
+3. FastAPI очищает HttpOnly cookie.
+4. React очищает currentUser.
+5. React открывает LoginPage.
+
+При HTTP 401:
+
+- очистить currentUser;
+- не повторять запрос бесконечно;
+- открыть LoginPage;
+- показать:
+  "Сессия завершена. Войдите снова."
+
+При code = reauth_required:
+
+"Требуется повторная авторизация через 1С."`,
+      },
+      {
+        title: "Настроить CORS FastAPI",
+        text: "Cookie должна передаваться между frontend и FastAPI во время локальной разработки.",
+        code: `FastAPI должен разрешить конкретный frontend origin:
+
+http://localhost:5173
+
+Требования:
+
+- allow_credentials=True;
+- разрешить только известные origins;
+- не использовать allow_origins=["*"]
+  вместе с credentials;
+- разрешить GET, POST, PATCH и DELETE;
+- разрешить Content-Type.
+
+В production список origins должен
+содержать только реальный домен frontend.`,
+      },
+      {
+        title: "Проверить вход",
+        text: "Проверьте полный сценарий через браузер и DevTools.",
+        code: `Порядок проверки:
+
+1. Запустить FastAPI.
+2. Запустить React.
+3. Открыть http://localhost:5173.
+4. Ввести credentials.
+5. Проверить POST /api/auth/login.
+6. Проверить cookie bridge_session
+   во вкладке Application → Cookies.
+7. Проверить GET /api/auth/me.
+8. Обновить страницу.
+9. Убедиться, что пользователь остаётся авторизован.
+10. Выполнить logout.
+11. Убедиться, что GET /api/auth/me
+    возвращает HTTP 401.
+
+В Network нельзя видеть:
+
+- пароль в URL;
+- access token 1С;
+- session token в JSON response.`,
+      },
+      {
+        title: "Prompt для Codex или Claude Code",
+        text: "Запускайте AI-агента внутри папки frontend, где находится React-проект.",
+        content: [
+          { type: "command", label: "Перейти в папку frontend", code: "cd frontend" },
+          { type: "command", label: "Запустить Codex", code: "codex" },
+          { type: "command", label: "Или запустить Claude Code", code: "claude" },
+          {
+            type: "snippet",
+            label: "Prompt для API-слоя, входа и logout",
+            body: `Ты работаешь в текущей папке frontend.
+
+Сначала изучи существующие файлы.
+Не изменяй bridge, onec и файлы за пределами frontend.
+
+Создай или обнови React-приложение на Vite.
+
+Архитектура:
+
+React → FastAPI → HTTP-сервис 1С
+
+React не должен обращаться к 1С напрямую.
+
+Если frontend уже является Vite-проектом,
+не создавай второй проект и не перезаписывай существующие файлы.
+
+Создай структуру:
+
+src/
+├── services/
+│   ├── api.js
+│   └── authApi.js
+├── auth/
+│   └── AuthProvider.jsx
+├── pages/
+│   └── LoginPage.jsx
+├── components/
+│   └── ProtectedRoute.jsx
+└── App.jsx
+
+Добавь frontend/.env.example:
+
+VITE_API_BASE_URL=http://localhost:8000
+
+Создай API-клиент.
+
+Требования к API-клиенту:
+
+- использовать VITE_API_BASE_URL;
+- удалять лишний slash между base URL и path;
+- использовать fetch;
+- отправлять credentials: "include";
+- поддерживать JSON;
+- не принимать URL 1С от пользователя;
+- не добавлять access token 1С;
+- не сохранять пароль;
+- обрабатывать HTTP 401, 403, 502 и 504.
+
+Создай authApi:
+
+login(username, password)
+POST /api/auth/login
+
+getCurrentUser()
+GET /api/auth/me
+
+logout()
+POST /api/auth/logout
+
+Login flow:
+
+1. Пользователь вводит username и password.
+2. React вызывает FastAPI.
+3. FastAPI передаёт credentials в 1С.
+4. 1С возвращает access token.
+5. FastAPI устанавливает HttpOnly cookie.
+6. React вызывает /api/auth/me.
+7. React сохраняет только профиль пользователя в памяти.
+
+Не сохраняй в frontend:
+
+- password;
+- session token;
+- access token;
+- ONEC_USERNAME;
+- ONEC_PASSWORD;
+- ONEC_BASE_URL.
+
+Создай AuthProvider:
+
+Состояния:
+
+- loading;
+- authenticated;
+- unauthenticated;
+- currentUser;
+- error.
+
+При запуске:
+
+- вызвать GET /api/auth/me;
+- если 200 — показать приложение;
+- если 401 — показать LoginPage;
+- если 502/504 — показать безопасную ошибку.
+
+Создай LoginPage:
+
+- поле username;
+- поле password;
+- loading state;
+- сообщение об ошибке;
+- вызов login;
+- после успешного входа переход в основное приложение.
+
+Не выводи пароль в console.log.
+
+Создай logout:
+
+1. Вызвать POST /api/auth/logout.
+2. Очистить currentUser.
+3. Перейти на LoginPage.
+
+При HTTP 401:
+
+- не выполнять бесконечный retry;
+- очистить состояние пользователя;
+- показать LoginPage;
+- сообщить, что сессия завершена.
+
+Добавь ProtectedRoute.
+Не показывай защищённые страницы,
+если GET /api/auth/me не подтвердил сессию.
+
+Проверь FastAPI CORS отдельно не изменяй:
+frontend должен работать с cookie через:
+
+credentials: "include"
+
+Проверь вручную:
+
+1. Запусти FastAPI на порту 8000.
+2. Запусти React на порту 5173.
+3. Выполни login.
+4. Проверь GET /api/auth/me.
+5. Проверь cookie bridge_session в DevTools.
+6. Обнови страницу.
+7. Убедись, что авторизация сохраняется.
+8. Выполни logout.
+9. Убедись, что пользователь возвращается на LoginPage.
+10. Проверь ответ 401 после logout.
+
+Не используй:
+
+- localStorage для токенов;
+- sessionStorage для токенов;
+- JWT в frontend;
+- прямые запросы к 1С;
+- пароль в URL;
+- access token в JSON response.
+
+После работы верни:
+
+- список созданных и изменённых файлов;
+- описание API-слоя;
+- описание login flow;
+- описание logout flow;
+- команды запуска;
+- результаты проверки;
+- найденные ограничения.`,
+          },
+          {
+            type: "note",
+            text: "Результат урока: React использует API-слой, отправляет credentials только в FastAPI и работает через защищённую серверную cookie-сессию. Прямого обращения React к 1С и хранения токенов в браузере нет.",
+          },
+        ],
       },
     ],
   },
