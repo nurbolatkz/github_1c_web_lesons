@@ -1106,29 +1106,222 @@ git status --short
     group: "FastAPI SQL",
     number: "08",
     title: "FastAPI как адаптер 1С",
-    subtitle: "Создайте сервис FastAPI, который нормализует запросы между React и 1C.",
+    subtitle: "Создайте Python-мост между React и опубликованным HTTP-сервисом 1С.",
     minutes: "30 мин",
     level: "Средний",
     complete: false,
-    need: ["Python", "Виртуальное окружение", "FastAPI"],
-    goal: "у моста будет health-эндпоинт и понятные настройки приложения.",
+    need: ["Python 3.12", "HTTP-сервис 1С из урока 06", "Файл .env", "Git"],
+    goal: "FastAPI будет принимать запросы React, обращаться к 1С, нормализовать ответы и возвращать понятные ошибки.",
     steps: [
       {
-        title: "Создайте виртуальное окружение",
-        text: "Держите зависимости Python локально, в папке bridge.",
+        title: "Создать виртуальное окружение",
+        text: "Все Python-зависимости хранятся внутри папки bridge и не смешиваются с другими проектами.",
         code: `cd bridge
 python -m venv .venv
 .\\.venv\\Scripts\\Activate.ps1`,
       },
       {
-        title: "Установите FastAPI",
-        text: "FastAPI предоставляет типизированные эндпоинты и автоматическую документацию API.",
-        code: "pip install fastapi uvicorn pydantic-settings",
+        title: "Установить зависимости",
+        text: "FastAPI отвечает за API, Pydantic Settings — за конфигурацию, а HTTPX — за запросы к HTTP-сервису 1С.",
+        code: `python -m pip install --upgrade pip
+pip install fastapi "uvicorn[standard]" pydantic-settings httpx
+pip freeze > requirements.txt`,
       },
       {
-        title: "Запустите мост",
-        text: "Запустите сервер разработки на порту 8000.",
-        code: "python -m uvicorn app.main:app --reload",
+        title: "Создать настройки приложения",
+        text: "FastAPI читает адрес и технические учётные данные 1С из .env. React и браузер эти значения не получают.",
+        code: `Настройки:
+
+ONEC_BASE_URL=http://localhost/onec-demo/hs/api
+ONEC_AUTH_MODE=basic
+ONEC_USERNAME=
+ONEC_PASSWORD=
+ONEC_TIMEOUT_SECONDS=15
+
+Нельзя принимать URL 1С от браузера.
+URL должен приходить только из серверной конфигурации.`,
+      },
+      {
+        title: "Создать health-эндпоинт",
+        text: "Health-эндпоинт показывает, что FastAPI запущен. Он не должен раскрывать пароль, токены или внутренние настройки.",
+        code: `GET /health
+
+Пример ответа:
+
+{
+  "status": "ok",
+  "service": "fastapi-bridge"
+}`,
+      },
+      {
+        title: "Создать клиент 1С",
+        text: "Вынесите HTTP-запросы к 1С в отдельный модуль. Не размещайте вызовы 1С внутри каждого React-маршрута.",
+        code: `FastAPI → OneCClient → HTTP-сервис 1С
+
+Клиент должен:
+- использовать ONEC_BASE_URL;
+- применять тайм-аут;
+- добавлять техническую авторизацию;
+- обрабатывать ошибки соединения;
+- не записывать пароль в логи.`,
+      },
+      {
+        title: "Создать адаптерные маршруты",
+        text: "Добавьте FastAPI-маршруты для товаров и заявок. React должен обращаться только к FastAPI.",
+        code: `FastAPI:
+
+GET    /api/products
+GET    /api/products/{id}
+POST   /api/products
+PATCH  /api/products/{id}
+DELETE /api/products/{id}
+
+GET    /api/requests
+GET    /api/requests/{id}
+POST   /api/requests
+PATCH  /api/requests/{id}
+DELETE /api/requests/{id}`,
+      },
+      {
+        title: "Нормализовать ошибки",
+        text: "Ошибки 1С не должны возвращаться во frontend в виде внутреннего traceback.",
+        code: `Правила:
+
+Ошибка подключения 1С → 502 Bad Gateway
+Тайм-аут 1С → 504 Gateway Timeout
+Объект не найден → 404 Not Found
+Неверные данные → 400 Bad Request
+
+Формат ошибки:
+
+{
+  "error": {
+    "code": "onec_unavailable",
+    "message": "Сервис 1С временно недоступен",
+    "request_id": "..."
+  }
+}`,
+      },
+      {
+        title: "Запустить и проверить мост",
+        text: "Проверьте FastAPI отдельно от React через Swagger и HTTP-запрос.",
+        code: `python -m uvicorn app.main:app --reload
+
+Проверки:
+
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/health
+
+Invoke-RestMethod http://127.0.0.1:8000/health`,
+      },
+      {
+        title: "Prompt для Codex или Claude Code",
+        text: "Запускайте AI-агента внутри папки bridge, где находится Python-проект.",
+        content: [
+          { type: "command", label: "Перейти в папку bridge", code: "cd bridge" },
+          { type: "command", label: "Запустить Codex", code: "codex" },
+          { type: "command", label: "Или запустить Claude Code", code: "claude" },
+          {
+            type: "snippet",
+            label: "Prompt для AI-агента",
+            body: `Ты работаешь в текущей папке bridge.
+
+Сначала изучи существующие файлы и структуру проекта.
+Не изменяй frontend, 1С-конфигурацию и файлы за пределами текущей папки.
+
+Создай минимальный FastAPI-адаптер между React и HTTP-сервисом 1С.
+
+Требования:
+
+1. Используй:
+   - FastAPI
+   - Uvicorn
+   - pydantic-settings
+   - httpx
+
+2. Создай понятную структуру:
+
+   app/
+   ├── main.py
+   ├── core/
+   │   └── settings.py
+   ├── clients/
+   │   └── onec_client.py
+   ├── routers/
+   │   ├── health.py
+   │   ├── products.py
+   │   └── requests.py
+   └── schemas/
+
+3. Загружай настройки из .env:
+
+   ONEC_BASE_URL
+   ONEC_AUTH_MODE
+   ONEC_USERNAME
+   ONEC_PASSWORD
+   ONEC_TIMEOUT_SECONDS
+
+4. Создай GET /health.
+   Ответ:
+
+   {
+     "status": "ok",
+     "service": "fastapi-bridge"
+   }
+
+5. Создай клиент OneCClient:
+   - используй ONEC_BASE_URL;
+   - убирай лишний символ / в URL;
+   - используй timeout;
+   - добавляй Basic Auth только на сервере;
+   - не передавай пароль в response и логи;
+   - не принимай произвольный URL от браузера.
+
+6. Создай адаптерные маршруты:
+
+   /api/products
+   /api/products/{id}
+   /api/requests
+   /api/requests/{id}
+
+   Поддержи GET, POST, PATCH и DELETE согласно HTTP-сервису 1С.
+
+7. DELETE должен выполнять пометку удаления в 1С, а не физическое удаление.
+
+8. Нормализуй ошибки:
+   - ошибка соединения 1С → 502;
+   - timeout → 504;
+   - объект не найден → 404;
+   - ошибка данных → 400.
+
+9. Не добавляй:
+   - SQL;
+   - пользовательские сессии;
+   - OAuth;
+   - Docker;
+   - прямые вызовы 1С из React.
+
+10. Добавь .env.example без секретов.
+
+11. Проверь проект командами:
+
+   python -m compileall app
+   python -m uvicorn app.main:app --reload
+
+После работы верни:
+- список созданных файлов;
+- краткое описание маршрутов;
+- команды проверки;
+- найденные ограничения;
+- что нужно сделать в следующем уроке.
+
+Не показывай значения паролей и токенов.`,
+          },
+          {
+            type: "note",
+            text: "Результат урока: FastAPI запускается, отвечает на /health и предоставляет контролируемые маршруты для работы с HTTP-сервисом 1С.",
+          },
+        ],
       },
     ],
   },
