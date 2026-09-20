@@ -1,8 +1,10 @@
 const GROUP_LABELS = {
   Overview: "Обзор",
-  "Getting started": "Начало",
-  "Build with AI": "Работа с AI",
-  "Connect to 1C": "Интеграция с 1C",
+  "Getting started": "Начало и командная работа",
+  "Build with AI": "React и CRUD-интерфейс",
+  "Connect to 1C": "FastAPI и SQL",
+  "1C HTTP": "1С и HTTP-сервис",
+  Release: "Проверка и production",
 };
 
 const lessons = [
@@ -765,7 +767,7 @@ COOKIE_SECURE=true`,
   },
   {
     id: "lesson-11",
-    group: "Connect to 1C",
+    group: "1C HTTP",
     number: "11",
     title: "HTTP-сервис 1C",
     subtitle: "Expose controlled 1C endpoints for the Python bridge service.",
@@ -794,7 +796,7 @@ ONEC_PASSWORD=`,
   },
   {
     id: "lesson-12",
-    group: "Connect to 1C",
+    group: "Release",
     number: "12",
     title: "Интеграция и релиз",
     subtitle: "Wire React, Python, and 1C together, then prepare the first release.",
