@@ -150,7 +150,6 @@ Python bridge backend
   {
     id: "lesson-01",
     group: "Getting started",
-    groupLabel: "Начало",
     number: "01",
     title: "Аккаунты и подписки",
     subtitle: "Подготовьте GitHub и аккаунт выбранного AI-инструмента перед установкой CLI.",
@@ -161,16 +160,6 @@ Python bridge backend
     goal: "ученик создал GitHub-аккаунт и подготовил аккаунт выбранного AI-инструмента для дальнейшей установки CLI.",
     ui: {
       lang: "ru",
-      courseTitle: "Уроки курса",
-      progress: (completed, total) => `${completed} из ${total} завершено`,
-      breadcrumbLesson: "Урок",
-      byTheEnd: "Результат урока:",
-      tocTitle: "На этой странице",
-      needsTitle: "Понадобится",
-      previous: "Предыдущий урок",
-      next: "Следующий урок",
-      markComplete: "Отметить завершённым",
-      markedComplete: "Завершено",
     },
     steps: [
       {
@@ -605,26 +594,13 @@ const article = document.querySelector("#lesson-article");
 const tocNav = document.querySelector("#toc-nav");
 const needList = document.querySelector("#need-list");
 const courseTitle = document.querySelector("#course-title");
-const progressLabel = document.querySelector("#progress-label");
 const tocTitle = document.querySelector("#toc-title");
 const needsTitle = document.querySelector("#needs-title");
-const progressFill = document.querySelector("#progress-fill");
 const themeToggle = document.querySelector("#theme-toggle");
 
 const savedTheme = localStorage.getItem("lesson-theme");
 if (savedTheme) {
   document.documentElement.dataset.theme = savedTheme;
-}
-
-function getCompleted() {
-  const stored = JSON.parse(localStorage.getItem("lesson-progress") || "{}");
-  return Object.fromEntries(lessons.map((lesson) => [lesson.id, stored[lesson.id] ?? lesson.complete]));
-}
-
-function setCompleted(lessonId, value) {
-  const progress = getCompleted();
-  progress[lessonId] = value;
-  localStorage.setItem("lesson-progress", JSON.stringify(progress));
 }
 
 function currentLesson() {
@@ -640,7 +616,6 @@ function groupedLessons() {
 }
 
 function renderNav() {
-  const progress = getCompleted();
   const groups = groupedLessons();
   nav.innerHTML = "";
 
@@ -657,15 +632,8 @@ function renderNav() {
     groupLessons.forEach((lesson) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = [
-        "lesson-link",
-        lesson.id === state.lessonId ? "active" : "",
-        progress[lesson.id] ? "complete" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
+      button.className = ["lesson-link", lesson.id === state.lessonId ? "active" : ""].filter(Boolean).join(" ");
       button.innerHTML = `
-        <span class="lesson-status">${progress[lesson.id] || lesson.id === state.lessonId ? icons.check : ""}</span>
         <span class="lesson-index">${lesson.number}</span>
         <span class="lesson-title">${lesson.title}</span>
       `;
@@ -679,13 +647,7 @@ function renderNav() {
 
 function renderProgress() {
   const lesson = currentLesson();
-  const progress = getCompleted();
-  const completed = lessons.filter((lesson) => progress[lesson.id]).length;
   courseTitle.textContent = lesson.ui?.courseTitle || "Уроки курса";
-  progressLabel.textContent = lesson.ui?.progress
-    ? lesson.ui.progress(completed, lessons.length)
-    : `${completed} из ${lessons.length} завершено`;
-  progressFill.style.width = `${(completed / lessons.length) * 100}%`;
 }
 
 function renderArticle() {
@@ -693,7 +655,6 @@ function renderArticle() {
   const lessonIndex = lessons.findIndex((item) => item.id === lesson.id);
   const previous = lessons[lessonIndex - 1];
   const next = lessons[lessonIndex + 1];
-  const progress = getCompleted();
   const ui = lesson.ui || {};
   const sectionLinks = lesson.steps
     .map((step, index) => `<a href="#${lesson.id}-step-${index + 1}">${step.title}</a>`)
@@ -729,13 +690,10 @@ function renderArticle() {
           ? `<button class="plain-link" type="button" data-lesson="${previous.id}">${icons.arrowLeft} ${ui.previous || "Предыдущий урок"}</button>`
           : `<span></span>`
       }
-      <button class="primary-action" id="complete-button" type="button">
-        ${progress[lesson.id] ? ui.markedComplete || "Завершено" : ui.markComplete || "Отметить завершённым"} ${icons.arrowRight}
-      </button>
       ${
         next
-          ? `<button class="plain-link" type="button" data-lesson="${next.id}">${ui.next || "Следующий урок"} ${icons.arrowRight}</button>`
-          : ""
+          ? `<button class="primary-action" type="button" data-lesson="${next.id}">${ui.next || "Следующий урок"} ${icons.arrowRight}</button>`
+          : `<span></span>`
       }
     </footer>
   `;
@@ -747,15 +705,6 @@ function renderArticle() {
 
   article.querySelectorAll("[data-lesson]").forEach((button) => {
     button.addEventListener("click", () => selectLesson(button.dataset.lesson));
-  });
-
-  article.querySelector("#complete-button").addEventListener("click", () => {
-    setCompleted(lesson.id, true);
-    render();
-    const nextLesson = lessons[lessonIndex + 1];
-    if (nextLesson) {
-      selectLesson(nextLesson.id);
-    }
   });
 
   article.querySelectorAll("[data-copy]").forEach((button) => {

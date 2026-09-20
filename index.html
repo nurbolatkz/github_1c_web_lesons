@@ -48,10 +48,6 @@
         <div class="sidebar-inner">
           <section class="progress-card">
             <h2 id="course-title">Course lessons</h2>
-            <p id="progress-label"><span id="completed-count">3</span> of <span id="total-count">12</span> completed</p>
-            <div class="progress-track">
-              <div class="progress-fill" id="progress-fill"></div>
-            </div>
           </section>
 
           <nav id="lesson-nav" class="lesson-nav"></nav>
@@ -65,13 +61,15 @@
       </main>
 
       <aside class="toc-panel" aria-label="Current lesson sections">
-        <div class="toc-block">
-          <h2 id="toc-title">On this page</h2>
-          <nav id="toc-nav"></nav>
-        </div>
-        <div class="toc-block">
-          <h2 id="needs-title">You will need</h2>
-          <ul id="need-list" class="need-list"></ul>
+        <div class="toc-sticky">
+          <div class="toc-block">
+            <h2 id="toc-title">On this page</h2>
+            <nav id="toc-nav"></nav>
+          </div>
+          <div class="toc-block">
+            <h2 id="needs-title">You will need</h2>
+            <ul id="need-list" class="need-list"></ul>
+          </div>
         </div>
       </aside>
     </div>
