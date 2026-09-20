@@ -1003,30 +1003,101 @@ postman/
     group: "1C Objects",
     number: "07",
     title: "Конфигурация .env",
-    subtitle: "Настройте переменные окружения для подключения FastAPI к 1C.",
-    minutes: "12 мин",
+    subtitle: "Настройте подключение FastAPI к HTTP-сервису 1С без хранения секретов в коде.",
+    minutes: "15 мин",
     level: "Начальный",
     complete: false,
-    need: ["Папка bridge", "Опубликованный HTTP-сервис"],
-    goal: "у моста будет файл .env с адресом и учётными данными 1C, не попадающими в Git.",
+    need: ["Проект FastAPI", "Опубликованный HTTP-сервис 1С", "Git и PowerShell"],
+    goal: "FastAPI будет получать адрес и учётные данные 1С из переменных окружения, а секреты не попадут во frontend и Git.",
     steps: [
       {
-        title: "Добавьте параметры подключения к 1C",
-        text: "Не храните учётные данные 1C в коде фронтенда.",
-        content: [
-          {
-            type: "snippet",
-            label: "Пример .env",
-            body: `ONEC_BASE_URL=http://localhost:8080
+        title: "Что такое .env",
+        text: "Файл .env хранит настройки приложения, которые отличаются на компьютере разработчика, тестовом сервере и production. FastAPI читает эти значения при запуске.",
+        code: `.env — локальные настройки приложения.
+
+Пример:
+
+ONEC_BASE_URL=http://localhost/onec-demo/hs/api
+ONEC_AUTH_MODE=basic
 ONEC_USERNAME=
-ONEC_PASSWORD=`,
-          },
-        ],
+ONEC_PASSWORD=
+ONEC_TIMEOUT_SECONDS=15
+
+Файл .env не публикуется и не передаётся в браузер.`,
       },
       {
-        title: "Исключите .env из Git",
-        text: "Добавьте .env в .gitignore и используйте .env.example как шаблон без секретов.",
-        code: "echo .env >> .gitignore",
+        title: "Что такое .gitignore",
+        text: "Файл .gitignore сообщает Git, какие файлы нельзя добавлять в коммиты. В него нужно добавить .env и другие локальные секреты.",
+        code: `.gitignore
+
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+node_modules/`,
+      },
+      {
+        title: "Создать безопасный шаблон",
+        text: "Файл .env.example хранится в репозитории, но содержит только имена параметров и пустые значения.",
+        code: `.env.example
+
+APP_ENV=local
+ONEC_BASE_URL=http://localhost/onec-demo/hs/api
+ONEC_AUTH_MODE=basic
+ONEC_USERNAME=
+ONEC_PASSWORD=
+ONEC_TIMEOUT_SECONDS=15
+DATABASE_URL=sqlite:///./data/app.db
+SESSION_TTL_MINUTES=60`,
+      },
+      {
+        title: "Создать локальный .env",
+        text: "Скопируйте шаблон и заполните значения только на своём компьютере.",
+        code: `Copy-Item .env.example .env
+
+notepad .env
+
+Заполните ONEC_USERNAME и ONEC_PASSWORD
+локальными учётными данными технического пользователя 1С.`,
+      },
+      {
+        title: "Проверить Git",
+        text: "Убедитесь, что .env игнорируется и не отображается как новый файл.",
+        code: `git check-ignore -v .env
+git status --short
+
+.env должен быть проигнорирован,
+а .env.example должен отображаться в Git.`,
+      },
+      {
+        title: "Правила безопасности",
+        text: "Секреты нельзя хранить во frontend, исходном коде, Postman-коллекции, README, логах и сообщениях AI-агенту.",
+        code: `Важно:
+
+- не добавлять .env в Git;
+- не вставлять пароль в React;
+- не отправлять пароль в логи;
+- использовать отдельного технического пользователя 1С;
+- ограничить права этого пользователя;
+- использовать HTTPS в production;
+- менять пароль при подозрении на утечку;
+- хранить production .env только на Linux-сервере.
+
+Если .env уже попал в Git,
+удалите его из истории и смените секреты.`,
+      },
+      {
+        title: "Проверить запуск FastAPI",
+        text: "После изменения .env перезапустите backend и убедитесь, что настройки загружаются без вывода секретов.",
+        code: `python -m uvicorn app.main:app --reload
+
+Проверьте:
+- FastAPI запускается;
+- адрес 1С читается из .env;
+- пароль не отображается в терминале;
+- запрос к HTTP-сервису 1С использует правильный URL.`,
       },
     ],
   },
