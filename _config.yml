@@ -1,0 +1,11 @@
+title: 1C + React Lessons
+description: Step-by-step lessons for building React frontends with 1C, Python bridge services, and AI-assisted CLI workflows.
+theme: minima
+markdown: kramdown
+
+header_pages:
+  - index.md
+  - lessons/00-course-plan.md
+  - lessons/01-toolchain-installation.md
+  - lessons/02-standard-project-architecture.md
+  - lessons/03-first-project-workflow.md
