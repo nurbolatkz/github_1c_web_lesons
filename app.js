@@ -327,15 +327,31 @@ New-Item bridge\\.env.example`,
       {
         title: "Создайте репозиторий",
         text: "Создайте публичный репозиторий и отправьте в него текущую папку.",
-        code: "gh repo create github_1c_web_lesons --public --source . --remote origin --push",
-        ai: "Создай README для проекта с React-фронтендом, Python-мостом и 1C-бэкендом.",
+        content: [
+          {
+            type: "video",
+            id: "IxyInsSqdGk",
+            title: "Создание репозитория на GitHub",
+            label: "Видео: как создать репозиторий",
+          },
+          { type: "command", label: "Создать репозиторий и отправить код", code: "gh repo create github_1c_web_lesons --public --source . --remote origin --push" },
+          { type: "ai", prompt: "Создай README для проекта с React-фронтендом, Python-мостом и 1C-бэкендом." },
+        ],
       },
       {
         title: "Сохраните первый коммит",
         text: "Добавьте все файлы, создайте коммит и отправьте его в ветку main.",
-        code: `git add .
-git commit -m "Add initial 1C React lesson site"
-git push -u origin main`,
+        content: [
+          {
+            type: "video",
+            id: "ykjj1bLft3M",
+            title: "Как сделать первый коммит и push в Git",
+            label: "Видео: как сохранить первый коммит",
+          },
+          { type: "command", label: "Добавить все файлы", code: "git add ." },
+          { type: "command", label: "Создать коммит", code: `git commit -m "Add initial 1C React lesson site"` },
+          { type: "command", label: "Отправить в main", code: "git push -u origin main" },
+        ],
       },
       {
         title: "Проверьте результат",
@@ -1302,6 +1318,8 @@ function renderBlock(block) {
       return renderLinks(block.links);
     case "video":
       return renderVideo(block);
+    case "ai":
+      return renderAi(block.prompt);
     default:
       return "";
   }
