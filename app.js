@@ -465,7 +465,6 @@ const icons = {
 
 const state = {
   lessonId: location.hash?.replace("#", "") || "project-overview",
-  query: "",
 };
 
 const nav = document.querySelector("#lesson-nav");
@@ -475,7 +474,6 @@ const needList = document.querySelector("#need-list");
 const completedCount = document.querySelector("#completed-count");
 const totalCount = document.querySelector("#total-count");
 const progressFill = document.querySelector("#progress-fill");
-const searchInput = document.querySelector("#lesson-search");
 const themeToggle = document.querySelector("#theme-toggle");
 
 const savedTheme = localStorage.getItem("lesson-theme");
@@ -499,11 +497,7 @@ function currentLesson() {
 }
 
 function groupedLessons() {
-  const filtered = lessons.filter((lesson) => {
-    const haystack = `${lesson.group} ${lesson.number} ${lesson.title} ${lesson.subtitle}`.toLowerCase();
-    return haystack.includes(state.query.toLowerCase());
-  });
-  return filtered.reduce((groups, lesson) => {
+  return lessons.reduce((groups, lesson) => {
     groups[lesson.group] ||= [];
     groups[lesson.group].push(lesson);
     return groups;
@@ -516,7 +510,7 @@ function renderNav() {
   nav.innerHTML = "";
 
   if (!Object.keys(groups).length) {
-    nav.innerHTML = '<p class="empty-state">No lessons match your search.</p>';
+    nav.innerHTML = '<p class="empty-state">No lessons available.</p>';
     return;
   }
 
@@ -722,18 +716,6 @@ function escapeHtml(value) {
 function escapeAttribute(value) {
   return escapeHtml(value).replaceAll("\n", "&#10;");
 }
-
-searchInput.addEventListener("input", (event) => {
-  state.query = event.target.value;
-  renderNav();
-});
-
-window.addEventListener("keydown", (event) => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-    event.preventDefault();
-    searchInput.focus();
-  }
-});
 
 themeToggle.addEventListener("click", () => {
   const nextTheme = document.documentElement.dataset.theme === "dark" ? "" : "dark";
