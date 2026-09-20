@@ -1,9 +1,9 @@
 const GROUP_LABELS = {
   Overview: "Обзор",
   "Getting started": "Начало и командная работа",
-  "Build with AI": "React и CRUD-интерфейс",
-  "Connect to 1C": "FastAPI и SQL",
-  "1C HTTP": "1С и HTTP-сервис",
+  "1C Objects": "1С и HTTP-сервис",
+  "FastAPI SQL": "FastAPI и SQL",
+  "React CRUD": "React и CRUD-интерфейс",
   Release: "Проверка и production",
 };
 
@@ -113,16 +113,66 @@ React
     ],
   },
   {
+    id: "lesson-00",
+    group: "Getting started",
+    number: "00",
+    title: "Что строим",
+    subtitle: "Целевая архитектура проекта и стандартная структура папок для всех будущих уроков.",
+    minutes: "18 мин",
+    level: "Начальный",
+    complete: true,
+    need: ["Прочитанный обзор проекта", "Ветка Git", "Папка проекта"],
+    goal: "репозиторий будет иметь целевую архитектуру и стандартную структуру папок для всех будущих уроков.",
+    steps: [
+      {
+        title: "Целевая архитектура",
+        text: "Каждый учебный проект использует одно и то же разделение: React-фронтенд, FastAPI-мост и 1C-бэкенд.",
+        code: `React frontend
+    |
+    | HTTP API
+    v
+FastAPI bridge
+    |
+    | HTTP-сервис / OData
+    v
+1C backend`,
+      },
+      {
+        title: "Создайте папки",
+        text: "Frontend, bridge, 1C, документация и автоматизация должны быть чётко разделены.",
+        code: `mkdir frontend
+mkdir bridge
+mkdir onec
+mkdir docs
+mkdir scripts
+mkdir .github
+mkdir .github\\workflows`,
+      },
+      {
+        title: "Добавьте шаблоны окружения",
+        text: "Шаблоны документируют нужные настройки без хранения реальных секретов.",
+        code: `New-Item .env.example
+New-Item frontend\\.env.example
+New-Item bridge\\.env.example`,
+      },
+      {
+        title: "Попросите AI-агента проверить структуру",
+        text: "Используйте AI для критики ещё до появления кода приложения.",
+        ai: "Проверь структуру этого репозитория для React-фронтенда, Python bridge API и 1C-бэкенда. Найди отсутствующие папки или документацию.",
+      },
+    ],
+  },
+  {
     id: "lesson-01",
     group: "Getting started",
     number: "01",
-    title: "Аккаунты и подписки",
-    subtitle: "Подготовьте GitHub и аккаунт выбранного AI-инструмента перед установкой CLI.",
-    minutes: "10 мин",
+    title: "Установка и CLI в Windows",
+    subtitle: "Подготовьте аккаунты и установите Git, GitHub CLI, Node.js, Python, Codex CLI и Claude Code.",
+    minutes: "40 мин",
     level: "Начальный",
     complete: true,
-    need: ["Аккаунт GitHub", "Аккаунт ChatGPT или Claude", "Выбранный маршрут: Codex CLI или Claude Code"],
-    goal: "ученик создал GitHub-аккаунт и подготовил аккаунт выбранного AI-инструмента для дальнейшей установки CLI.",
+    need: ["Windows", "PowerShell", "Права администратора для установки"],
+    goal: "у вас готовы аккаунты GitHub и AI-инструмента, а также установлены все CLI для React, Python, GitHub, Codex и Claude Code.",
     ui: {
       lang: "ru",
     },
@@ -169,20 +219,6 @@ React
         title: "Выберите один AI-инструмент",
         text: "Для прохождения курса достаточно выбрать один инструмент: Codex CLI или Claude Code. Покупать обе подписки не требуется. Подписка имеет лимиты использования; доступ через API оплачивается отдельно.",
       },
-    ],
-  },
-  {
-    id: "lesson-02",
-    group: "Getting started",
-    number: "02",
-    title: "Инструменты и терминал",
-    subtitle: "Установите инструменты для React, Python, GitHub и AI-assisted разработки.",
-    minutes: "20 мин",
-    level: "Начальный",
-    complete: true,
-    need: ["PowerShell", "Подключение к интернету", "Права администратора для установки"],
-    goal: "компьютер готов к работе с React, Python, GitHub, Codex CLI и Claude Code.",
-    steps: [
       {
         title: "Установите Git и GitHub CLI",
         text: "Git хранит историю изменений проекта. GitHub CLI позволяет работать с репозиториями, Pull Request и авторизацией прямо из PowerShell.",
@@ -257,7 +293,80 @@ React
           { type: "command", label: "Проверить Claude Code", code: "claude --version" },
           {
             type: "note",
-            text: "Если все команды выполнились без ошибки, компьютер готов к созданию первого проекта. В следующем уроке мы создадим репозиторий и настроим стандартную структуру проекта.",
+            text: "Если все команды выполнились без ошибки, компьютер готов к созданию первого проекта. В следующем уроке мы создадим репозиторий и настроим ветку задачи.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "lesson-02",
+    group: "Getting started",
+    number: "02",
+    title: "Репозиторий и ветка задачи",
+    subtitle: "Создайте первый репозиторий GitHub и отдельную ветку для новой задачи.",
+    minutes: "25 мин",
+    level: "Начальный",
+    complete: true,
+    need: ["Установленный Git", "Аккаунт GitHub", "GitHub CLI"],
+    goal: "ваш проект будет опубликован на GitHub, а для новой задачи создана отдельная ветка.",
+    steps: [
+      {
+        title: "Войдите в GitHub",
+        text: "Откройте PowerShell и войдите в GitHub через браузер.",
+        content: [
+          {
+            type: "video",
+            id: "JfpCicDUMKc",
+            title: "Изучение GitHub в одном видео уроке за 15 минут!",
+            label: "Видео: как пользоваться GitHub за 15 минут",
+          },
+          { type: "command", label: "Войти в GitHub CLI", code: "gh auth login" },
+        ],
+      },
+      {
+        title: "Создайте репозиторий",
+        text: "Создайте публичный репозиторий и отправьте в него текущую папку.",
+        code: "gh repo create github_1c_web_lesons --public --source . --remote origin --push",
+        ai: "Создай README для проекта с React-фронтендом, Python-мостом и 1C-бэкендом.",
+      },
+      {
+        title: "Сохраните первый коммит",
+        text: "Добавьте все файлы, создайте коммит и отправьте его в ветку main.",
+        code: `git add .
+git commit -m "Add initial 1C React lesson site"
+git push -u origin main`,
+      },
+      {
+        title: "Проверьте результат",
+        text: "Откройте репозиторий и убедитесь, что файлы видны.",
+        code: "gh repo view --web",
+      },
+      {
+        title: "Создайте ветку задачи",
+        text: "Одна задача должна иметь одну рабочую ветку. Используйте понятный префикс в названии ветки.",
+        content: [
+          {
+            type: "video",
+            id: "wR3gXOiRm10",
+            title: "Git branch — работа с ветками",
+            label: "Видео: работа с ветками Git",
+          },
+          { type: "command", label: "Создать ветку задачи", code: "git switch -c feat/product-search" },
+          {
+            type: "snippet",
+            label: "Правило именования веток",
+            body: `Используйте формат:
+feat/название-функции
+fix/название-ошибки
+docs/название-документации`,
+          },
+          {
+            type: "snippet",
+            label: "Примеры названий веток",
+            body: `feat/product-search
+fix/login-error
+docs/setup-guide`,
           },
         ],
       },
@@ -267,50 +376,13 @@ React
     id: "lesson-03",
     group: "Getting started",
     number: "03",
-    title: "Первый репозиторий GitHub",
-    subtitle: "Create a repository, save your work, and push your first commit.",
-    minutes: "15 мин",
+    title: "Командная работа и AI",
+    subtitle: "Научитесь выполнять задачу через Issue, Pull Request, ревью, безопасное объединение изменений и AI-агентов.",
+    minutes: "35 мин",
     level: "Начальный",
-    complete: false,
-    need: ["Git installed", "GitHub account", "GitHub CLI"],
-    goal: "your project will be on GitHub.",
-    steps: [
-      {
-        title: "Sign in to GitHub",
-        text: "Open your terminal and sign in with your browser.",
-        code: "gh auth login",
-      },
-      {
-        title: "Create your repository",
-        text: "Create a public repository and push the current folder.",
-        code: "gh repo create github_1c_web_lesons --public --source . --remote origin --push",
-        ai: "Create a README for a React frontend, Python bridge, and 1C backend project.",
-      },
-      {
-        title: "Save your first commit",
-        text: "Stage all files, create a commit, and push it to the main branch.",
-        code: `git add .
-git commit -m "Add initial 1C React lesson site"
-git push -u origin main`,
-      },
-      {
-        title: "Check your result",
-        text: "Open the repository and confirm the files are visible.",
-        code: "gh repo view --web",
-      },
-    ],
-  },
-  {
-    id: "lesson-04",
-    group: "Getting started",
-    number: "04",
-    title: "Командная работа в GitHub",
-    subtitle: "Научитесь выполнять задачу через Issue, отдельную ветку, Pull Request, ревью и безопасное объединение изменений.",
-    minutes: "25 мин",
-    level: "Начальный",
-    complete: false,
-    need: ["Git и GitHub CLI", "Настроенный репозиторий", "Права на создание Pull Request"],
-    goal: "вы сможете взять задачу, создать ветку, отправить изменения в GitHub, открыть Pull Request, пройти ревью, выполнить merge и безопасно отменить ошибочный коммит.",
+    complete: true,
+    need: ["Git и GitHub CLI", "Настроенный репозиторий", "Codex CLI или Claude Code"],
+    goal: "вы сможете взять задачу, отправить изменения в GitHub, открыть Pull Request, пройти ревью, выполнить merge, безопасно отменить ошибочный коммит и использовать AI-агента в рамках задачи.",
     steps: [
       {
         title: "Начните с актуальной ветки main",
@@ -334,8 +406,8 @@ git push -u origin main`,
         ],
       },
       {
-        title: "Создайте Issue и отдельную ветку",
-        text: "Одна задача должна иметь одну Issue, одну рабочую ветку и один Pull Request. Ветка main используется для согласованного состояния проекта.",
+        title: "Создайте Issue",
+        text: "Одна задача должна иметь одну Issue и один Pull Request. Ветка main используется для согласованного состояния проекта.",
         content: [
           {
             type: "video",
@@ -358,28 +430,6 @@ git push -u origin main`,
 - поиск работает на desktop и mobile;
 - существующие сценарии не сломались;
 - проверка описана в Pull Request.`,
-          },
-          {
-            type: "video",
-            id: "wR3gXOiRm10",
-            title: "Git branch — работа с ветками",
-            label: "Видео: работа с ветками Git",
-          },
-          { type: "command", label: "Создать ветку задачи", code: "git switch -c feat/product-search" },
-          {
-            type: "snippet",
-            label: "Правило именования веток",
-            body: `Используйте формат:
-feat/название-функции
-fix/название-ошибки
-docs/название-документации`,
-          },
-          {
-            type: "snippet",
-            label: "Примеры названий веток",
-            body: `feat/product-search
-fix/login-error
-docs/setup-guide`,
           },
         ],
       },
@@ -550,6 +600,15 @@ Closes #
         ],
       },
       {
+        title: "Используйте AI в командной работе",
+        text: "Давайте AI-инструментам чистую ветку и узкую задачу, чтобы результат было легко проверить в Pull Request.",
+        content: [
+          { type: "command", label: "Начать с чистой ветки", code: "git switch -c feature/python-bridge-health-check" },
+          { type: "command", label: "Запустить Codex для реализации", code: "codex" },
+          { type: "command", label: "Запустить Claude для ревью", code: "claude" },
+        ],
+      },
+      {
         title: "Итоговый чек-лист",
         content: [
           {
@@ -566,6 +625,7 @@ Closes #
               "Я умею обновить локальную main.",
               "Я умею отменить ошибочный коммит через git revert.",
               "Я понимаю, как разрешается merge conflict.",
+              "Я использовал AI-агента в рамках задачи.",
             ],
           },
         ],
@@ -573,268 +633,484 @@ Closes #
     ],
   },
   {
-    id: "lesson-05",
-    group: "Build with AI",
-    number: "05",
-    title: "Структура проекта",
-    subtitle: "Create the repeatable folders used in every React + Python + 1C project.",
-    minutes: "18 мин",
+    id: "lesson-04",
+    group: "1C Objects",
+    number: "04",
+    title: "Учебные объекты 1С",
+    subtitle: "Создайте справочник Товары и документ Заявка для учебного CRUD.",
+    minutes: "20 мин",
     level: "Начальный",
     complete: false,
-    need: ["Git branch", "Project folder", "Terminal"],
-    goal: "your repository will have the standard architecture for all future projects.",
+    need: ["Платформа 1C", "Тестовая база"],
+    goal: "в 1C будут созданы справочник Товары и документ Заявка, готовые для интеграции.",
     steps: [
       {
-        title: "Create folders",
-        text: "Keep frontend, bridge, 1C, docs, and automation clearly separated.",
-        code: `mkdir frontend
-mkdir bridge
-mkdir onec
-mkdir docs
-mkdir scripts
-mkdir .github
-mkdir .github\\workflows`,
+        title: "Создайте справочник Товары",
+        text: "Справочник хранит список товаров: список, просмотр, создание, изменение и пометка удаления.",
+        code: `Справочник: Товары
+  -> список
+  -> просмотр
+  -> создание
+  -> изменение
+  -> пометка удаления`,
       },
       {
-        title: "Add environment templates",
-        text: "Templates document required settings without storing real secrets.",
-        code: `New-Item .env.example
-New-Item frontend\\.env.example
-New-Item bridge\\.env.example`,
+        title: "Создайте документ Заявка",
+        text: "Документ хранит шапку и табличную часть товаров.",
+        code: `Документ: Заявка
+  -> шапка
+  -> строки товаров
+  -> сохранение
+  -> проверка результата в 1C`,
       },
       {
-        title: "Ask an AI agent to review structure",
-        text: "Use AI for critique before application code exists.",
-        ai: "Review this repository structure for a React frontend, Python bridge API, and 1C backend. Find missing folders or documentation.",
+        title: "Используйте пометку удаления",
+        text: "Удаление в уроках означает пометку удаления, а не физическое удаление данных. Это защищает историю документов и ссылочную целостность.",
+      },
+    ],
+  },
+  {
+    id: "lesson-05",
+    group: "1C Objects",
+    number: "05",
+    title: "HTTP-сервис и CRUD в 1С",
+    subtitle: "Опубликуйте контролируемые CRUD-эндпоинты 1C для Python-моста.",
+    minutes: "25 мин",
+    level: "Средний",
+    complete: false,
+    need: ["Платформа 1C", "Учебные объекты 1С"],
+    goal: "1C будет предоставлять контролируемый CRUD-эндпоинт для Python-моста.",
+    steps: [
+      {
+        title: "Выберите способ интеграции",
+        text: "Сначала используйте HTTP-сервисы или OData. COM и файловый обмен — только если этого требует проект.",
+      },
+      {
+        title: "Опишите форму запроса и ответа",
+        text: "Мост ожидает стабильные JSON-подобные контракты, даже если внутри 1C используются другие имена.",
+      },
+      {
+        title: "Определите CRUD-методы",
+        text: "Для справочника и документа предусмотрите отдельные методы HTTP-сервиса.",
+        code: `GET    /items            - список товаров
+GET    /items/{id}       - один товар
+POST   /items            - создание товара
+PATCH  /items/{id}       - изменение товара
+DELETE /items/{id}       - пометка удаления`,
       },
     ],
   },
   {
     id: "lesson-06",
-    group: "Build with AI",
+    group: "1C Objects",
     number: "06",
-    title: "Работа с AI в коде",
-    subtitle: "Use Codex CLI and Claude Code with branches, reviews, and focused prompts.",
-    minutes: "16 мин",
-    level: "Начальный",
+    title: "Публикация базы и HTTP-сервиса",
+    subtitle: "Опубликуйте информационную базу и HTTP-сервис для доступа извне.",
+    minutes: "20 мин",
+    level: "Средний",
     complete: false,
-    need: ["Codex CLI", "Claude Code", "Clean Git status"],
-    goal: "you will use AI tools without losing control of the repository.",
+    need: ["Платформа 1C", "Тестовая база", "Веб-сервер (IIS или Apache)"],
+    goal: "база и HTTP-сервис 1C будут доступны по сети для Python-моста.",
     steps: [
       {
-        title: "Start from a branch",
-        text: "Give AI tools a clean branch and a narrow task.",
-        code: "git checkout -b feature/python-bridge-health-check",
+        title: "Опубликуйте базу на веб-сервере",
+        text: "Используйте штатный мастер публикации 1C, чтобы сделать базу доступной по HTTP.",
+        info: [
+          "Публикация создаёт файл default.vrd с параметрами подключения.",
+          "Доступ должен быть ограничен по сети или паролем.",
+          "Для разработки достаточно локального веб-сервера.",
+        ],
       },
       {
-        title: "Run Codex for implementation",
-        text: "Codex can inspect files, edit code, and run checks from the repository root.",
-        code: "codex",
+        title: "Проверьте доступность HTTP-сервиса",
+        text: "Откройте адрес опубликованного HTTP-сервиса и убедитесь, что он отвечает.",
+        code: "curl http://localhost/basename/hs/api/ping",
       },
       {
-        title: "Run Claude for review",
-        text: "Claude is useful for second-pass architecture review and missing documentation checks.",
-        code: "claude",
+        title: "Что дальше",
+        content: [
+          {
+            type: "note",
+            text: "Подробная пошаговая инструкция по публикации через IIS появится в одном из следующих обновлений курса.",
+          },
+        ],
       },
     ],
   },
   {
     id: "lesson-07",
-    group: "Build with AI",
+    group: "1C Objects",
     number: "07",
-    title: "Создание фронтенда",
-    subtitle: "Scaffold a React frontend with a clean API service layer.",
-    minutes: "25 мин",
-    level: "Средний",
+    title: "Конфигурация .env",
+    subtitle: "Настройте переменные окружения для подключения FastAPI к 1C.",
+    minutes: "12 мин",
+    level: "Начальный",
     complete: false,
-    need: ["Node.js", "npm", "Project structure"],
-    goal: "your React app will be ready to call the Python bridge API.",
+    need: ["Папка bridge", "Опубликованный HTTP-сервис"],
+    goal: "у моста будет файл .env с адресом и учётными данными 1C, не попадающими в Git.",
     steps: [
       {
-        title: "Scaffold React",
-        text: "Use Vite for fast local development.",
+        title: "Добавьте параметры подключения к 1C",
+        text: "Не храните учётные данные 1C в коде фронтенда.",
+        content: [
+          {
+            type: "snippet",
+            label: "Пример .env",
+            body: `ONEC_BASE_URL=http://localhost:8080
+ONEC_USERNAME=
+ONEC_PASSWORD=`,
+          },
+        ],
+      },
+      {
+        title: "Исключите .env из Git",
+        text: "Добавьте .env в .gitignore и используйте .env.example как шаблон без секретов.",
+        code: "echo .env >> .gitignore",
+      },
+    ],
+  },
+  {
+    id: "lesson-08",
+    group: "FastAPI SQL",
+    number: "08",
+    title: "FastAPI как адаптер 1С",
+    subtitle: "Создайте сервис FastAPI, который нормализует запросы между React и 1C.",
+    minutes: "30 мин",
+    level: "Средний",
+    complete: false,
+    need: ["Python", "Виртуальное окружение", "FastAPI"],
+    goal: "у моста будет health-эндпоинт и понятные настройки приложения.",
+    steps: [
+      {
+        title: "Создайте виртуальное окружение",
+        text: "Держите зависимости Python локально, в папке bridge.",
+        code: `cd bridge
+python -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1`,
+      },
+      {
+        title: "Установите FastAPI",
+        text: "FastAPI предоставляет типизированные эндпоинты и автоматическую документацию API.",
+        code: "pip install fastapi uvicorn pydantic-settings",
+      },
+      {
+        title: "Запустите мост",
+        text: "Запустите сервер разработки на порту 8000.",
+        code: "python -m uvicorn app.main:app --reload",
+      },
+    ],
+  },
+  {
+    id: "lesson-09",
+    group: "FastAPI SQL",
+    number: "09",
+    title: "SQL-база и DB Browser",
+    subtitle: "Спроектируйте таблицы users и sessions и проверьте их в DB Browser.",
+    minutes: "20 мин",
+    level: "Средний",
+    complete: false,
+    need: ["FastAPI app", "SQL database", "DB Browser for SQLite"],
+    goal: "вы будете понимать структуру таблиц users и sessions и уметь проверять их в DB Browser.",
+    steps: [
+      {
+        title: "Спроектируйте таблицы",
+        text: "Для входа и сессий на одном домене достаточно двух таблиц.",
+        code: `Браузер
+  -> случайный токен в cookie HttpOnly, Secure, SameSite=Lax
+FastAPI
+  -> проверяет пароль, сессию, срок действия, отзыв и роль
+SQL users
+  -> пользователь, хеш пароля, роль, флаг активности
+SQL sessions
+  -> хеш токена, пользователь, created_at, expires_at, revoked_at`,
+      },
+      {
+        title: "Проверьте данные в DB Browser",
+        text: "Используйте DB Browser for SQLite в учебном окружении, чтобы посмотреть пользователей, сессии, срок действия, последнюю активность и отзыв.",
+        ai: "Создай урок FastAPI, который показывает вход, сессии в SQL, logout, простой idle timeout и проверку в DB Browser.",
+      },
+    ],
+  },
+  {
+    id: "lesson-10",
+    group: "FastAPI SQL",
+    number: "10",
+    title: "Вход и серверная сессия",
+    subtitle: "Реализуйте вход с защищённой cookie и серверной сессией в SQL.",
+    minutes: "22 мин",
+    level: "Средний",
+    complete: false,
+    need: ["FastAPI app", "SQL database", "HTTPS plan"],
+    goal: "вы будете понимать, где хранится токен сессии и как FastAPI подтверждает вход пользователя.",
+    steps: [
+      {
+        title: "Создайте flow входа",
+        text: "FastAPI проверяет пароль, создаёт новую сессию, хранит в SQL только хеш токена и отправляет исходный токен только в cookie.",
+        code: `POST /api/auth/login
+GET  /api/auth/me
+POST /api/auth/logout`,
+      },
+    ],
+  },
+  {
+    id: "lesson-11",
+    group: "FastAPI SQL",
+    number: "11",
+    title: "Срок действия и выход",
+    subtitle: "Настройте TTL сессии, таймаут бездействия и безопасный logout.",
+    minutes: "20 мин",
+    level: "Средний",
+    complete: false,
+    need: ["FastAPI app", "SQL sessions", "DB Browser for SQLite"],
+    goal: "вы сможете наблюдать истечение сессии и отзыв доступа после logout в DB Browser.",
+    steps: [
+      {
+        title: "Настройте политику сессии",
+        text: "Используйте абсолютный максимум и таймаут бездействия, чтобы можно было наблюдать истечение и отзыв в DB Browser.",
+        code: `SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+COOKIE_SECURE=true`,
+      },
+      {
+        title: "Добавьте меры безопасности",
+        text: "Используйте HTTPS, ограничение попыток входа, хеширование Argon2id, CSRF-защиту для изменяющих запросов и безопасные сообщения об ошибках.",
+        info: [
+          "JavaScript не читает секретный токен.",
+          "Logout выставляет revoked_at и очищает cookie.",
+          "Блокировка пользователя и смена пароля отзывают текущие сессии.",
+          "OAuth2 и access/refresh JWT не обязательны для первого приложения.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "lesson-12",
+    group: "React CRUD",
+    number: "12",
+    title: "React-приложение и вход",
+    subtitle: "Разверните React-фронтенд со слоем API и экраном входа.",
+    minutes: "28 мин",
+    level: "Средний",
+    complete: false,
+    need: ["Node.js", "npm", "FastAPI app"],
+    goal: "ваше React-приложение сможет вызывать Python-мост и выполнять вход пользователя.",
+    steps: [
+      {
+        title: "Разверните React",
+        text: "Используйте Vite для быстрой локальной разработки.",
         code: `npm create vite@latest frontend -- --template react
 cd frontend
 npm install
 npm run dev`,
       },
       {
-        title: "Add API base URL",
-        text: "React should call the Python bridge, not 1C directly.",
+        title: "Добавьте базовый адрес API",
+        text: "React должен обращаться к Python-мосту, а не напрямую к 1C.",
         code: "VITE_API_BASE_URL=http://localhost:8000",
       },
       {
-        title: "Create service functions",
-        text: "Keep API calls out of page components so contracts are easy to test.",
+        title: "Создайте сервисные функции",
+        text: "Держите вызовы API вне компонентов страниц, чтобы контракты было легко тестировать.",
+      },
+      {
+        title: "Добавьте экран входа",
+        text: "Экран входа отправляет логин и пароль в FastAPI и сохраняет данные текущего пользователя из /api/auth/me.",
+        code: "POST /api/auth/login",
       },
     ],
   },
   {
-    id: "lesson-08",
-    group: "Build with AI",
-    number: "08",
-    title: "Доработка фронтенда",
-    subtitle: "Build predictable pages, forms, loading states, and API error states.",
-    minutes: "22 мин",
+    id: "lesson-13",
+    group: "React CRUD",
+    number: "13",
+    title: "CRUD-интерфейс справочника",
+    subtitle: "Постройте предсказуемые страницы, формы и состояния для справочника Товары.",
+    minutes: "26 мин",
     level: "Средний",
     complete: false,
     need: ["React app", "API contract", "Design conventions"],
-    goal: "your frontend will be structured for real business workflows.",
+    goal: "интерфейс справочника Товары будет структурирован для реальных рабочих сценариев.",
     steps: [
       {
-        title: "Create page layout",
-        text: "Use routes for workflows and reusable components for repeated controls.",
+        title: "Создайте макет страницы",
+        text: "Используйте маршруты для сценариев и переиспользуемые компоненты для повторяющихся элементов управления.",
       },
       {
-        title: "Handle API states",
-        text: "Every page that calls the bridge must handle loading, empty, success, and error states.",
+        title: "Обработайте состояния API",
+        text: "Каждая страница, вызывающая мост, должна обрабатывать загрузку, пустой результат, успех и ошибку.",
       },
       {
-        title: "Commit frontend work",
-        text: "Keep frontend commits focused and reviewable.",
+        title: "Зафиксируйте работу фронтенда",
+        text: "Держите коммиты фронтенда сфокусированными и удобными для ревью.",
         code: `git add frontend
 git commit -m "Add React frontend shell"`,
       },
     ],
   },
   {
-    id: "lesson-09",
-    group: "Connect to 1C",
-    number: "09",
-    title: "API Python-моста",
-    subtitle: "Create a FastAPI service that normalizes requests between React and 1C.",
-    minutes: "30 мин",
+    id: "lesson-14",
+    group: "React CRUD",
+    number: "14",
+    title: "CRUD-интерфейс документа",
+    subtitle: "Соберите список, форму и сохранение документа Заявка.",
+    minutes: "26 мин",
     level: "Средний",
     complete: false,
-    need: ["Python", "Virtual environment", "FastAPI"],
-    goal: "your bridge API will have a health endpoint and clear app settings.",
+    need: ["React app", "API contract справочника", "CRUD справочника"],
+    goal: "интерфейс документа Заявка позволит создать шапку, строки товаров и сохранить результат.",
     steps: [
       {
-        title: "Create virtual environment",
-        text: "Keep Python dependencies local to the bridge folder.",
-        code: `cd bridge
-python -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1`,
+        title: "Создайте список заявок",
+        text: "Форма списка показывает заявки, а форма объекта — шапку и строки товаров.",
+        code: `Форма списка   -> React list page
+Форма объекта  -> шапка + строки товаров`,
       },
       {
-        title: "Install FastAPI",
-        text: "FastAPI provides typed endpoints and generated API docs.",
-        code: "pip install fastapi uvicorn pydantic-settings",
+        title: "Добавьте ReferencePicker для товара",
+        text: "Форма выбора товара переиспользуется в строках заявки, а ссылка на объект — это стабильный ID в API.",
       },
       {
-        title: "Run the bridge",
-        text: "Start the development server on port 8000.",
-        code: "python -m uvicorn app.main:app --reload",
+        title: "Сохраните и проверьте результат",
+        text: "После сохранения проверьте, что заявка и её строки появились в 1C.",
       },
     ],
   },
   {
-    id: "lesson-10",
-    group: "Connect to 1C",
-    number: "10",
-    title: "Серверные сессии",
-    subtitle: "Implement login with a protected cookie and SQL-backed sessions.",
-    minutes: "24 мин",
+    id: "lesson-15",
+    group: "React CRUD",
+    number: "15",
+    title: "Редактирование UI с AI",
+    subtitle: "Используйте AI-агента, чтобы проверить и улучшить CRUD-экраны.",
+    minutes: "16 мин",
     level: "Средний",
     complete: false,
-    need: ["FastAPI app", "SQL database", "DB Browser for SQLite", "HTTPS plan"],
-    goal: "you will understand where the session token lives, how expiry works, and how logout revokes access.",
+    need: ["React app", "Codex CLI или Claude Code", "Clean Git status"],
+    goal: "вы сможете использовать AI-агента для точечных, проверяемых правок интерфейса.",
     steps: [
       {
-        title: "Choose the session model",
-        text: "For React and FastAPI on one domain, use login/password, a random opaque session token in a protected cookie, and a server-side session row in SQL.",
-        code: `Browser
-  -> random token in HttpOnly Secure SameSite=Lax cookie
-FastAPI
-  -> checks password, session, expiry, revocation and role
-SQL users
-  -> user, password hash, role, active flag
-SQL sessions
-  -> token hash, user, created_at, expires_at, revoked_at`,
+        title: "Попросите AI проверить экран",
+        text: "Используйте AI для критики интерфейса ещё до релиза.",
+        ai: "Проверь этот CRUD-экран React на отсутствующие состояния загрузки/ошибки и соответствие текущему стилю интерфейса.",
       },
       {
-        title: "Create login flow",
-        text: "FastAPI verifies the password, creates a new session, stores only a token hash in SQL, and sends the original token only as a cookie.",
-        code: `POST /api/auth/login
-GET  /api/auth/me
-POST /api/auth/logout`,
-      },
-      {
-        title: "Set session policy",
-        text: "Use an absolute maximum and an idle timeout so students can observe expiry and revocation in DB Browser.",
-        code: `SESSION_ABSOLUTE_TTL_SECONDS=28800
-SESSION_IDLE_TTL_SECONDS=1800
-COOKIE_SECURE=true`,
-      },
-      {
-        title: "Add security controls",
-        text: "Use HTTPS, login rate limits, Argon2id password hashing, CSRF protection for changing requests, and safe error messages.",
-        info: [
-          "JavaScript does not read the secret token.",
-          "Logout sets revoked_at and clears the cookie.",
-          "Blocked users and password changes revoke existing sessions.",
-          "OAuth2 and access/refresh JWT are not required for the first application.",
-        ],
-      },
-      {
-        title: "Verify in SQL",
-        text: "Use DB Browser for SQLite in the training environment to inspect users, sessions, expiry, last activity and revocation.",
-        ai: "Create a FastAPI lesson that demonstrates login, SQL-backed sessions, logout, idle timeout and DB Browser verification.",
+        title: "Внесите точечные правки",
+        text: "Просите AI вносить небольшие, проверяемые изменения в рамках одной ветки, а не переписывать экран целиком.",
       },
     ],
   },
   {
-    id: "lesson-11",
-    group: "1C HTTP",
-    number: "11",
-    title: "HTTP-сервис 1C",
-    subtitle: "Expose controlled 1C endpoints for the Python bridge service.",
-    minutes: "28 мин",
-    level: "Средний",
-    complete: false,
-    need: ["1C platform", "Test database", "Published HTTP service"],
-    goal: "1C will expose a controlled integration endpoint for the bridge.",
-    steps: [
-      {
-        title: "Choose the integration method",
-        text: "Use HTTP services or OData first. Use COM or file exchange only when the project requires it.",
-      },
-      {
-        title: "Define request and response shape",
-        text: "The bridge expects stable JSON-like contracts, even if 1C internally uses different names.",
-      },
-      {
-        title: "Store credentials in the bridge",
-        text: "Do not store 1C credentials in frontend code.",
-        code: `ONEC_BASE_URL=http://localhost:8080
-ONEC_USERNAME=
-ONEC_PASSWORD=`,
-      },
-    ],
-  },
-  {
-    id: "lesson-12",
+    id: "lesson-16",
     group: "Release",
-    number: "12",
-    title: "Интеграция и релиз",
-    subtitle: "Wire React, Python, and 1C together, then prepare the first release.",
-    minutes: "35 мин",
+    number: "16",
+    title: "Проверка после изменений",
+    subtitle: "Проверьте полный путь запроса и добавьте логи для диагностики.",
+    minutes: "18 мин",
     level: "Средний",
     complete: false,
     need: ["Frontend build", "Bridge server", "1C endpoint"],
-    goal: "the full stack will run end to end with documented release steps.",
+    goal: "вы сможете проверить полный путь запроса и найти его в логах фронтенда, моста и 1C.",
     steps: [
       {
-        title: "Test the full request path",
-        text: "Confirm a browser action reaches React, the Python bridge, and the 1C service.",
+        title: "Проверьте полный путь запроса",
+        text: "Убедитесь, что действие в браузере доходит до React, Python-моста и сервиса 1C.",
       },
       {
-        title: "Add logs and trace IDs",
-        text: "A trace ID makes it easier to find the same request in frontend, bridge, and 1C logs.",
+        title: "Добавьте логи и trace ID",
+        text: "Trace ID упрощает поиск одного и того же запроса в логах фронтенда, моста и 1C.",
+      },
+    ],
+  },
+  {
+    id: "lesson-17",
+    group: "Release",
+    number: "17",
+    title: "Первый выпуск на Linux",
+    subtitle: "Разверните приложение на Linux с nginx, systemd и HTTPS.",
+    minutes: "30 мин",
+    level: "Средний",
+    complete: false,
+    need: ["Linux-сервер", "nginx", "systemd"],
+    goal: "приложение будет развёрнуто на Linux с nginx, systemd и HTTPS.",
+    steps: [
+      {
+        title: "Подготовьте сервер",
+        text: "Установите nginx и systemd-сервис для Python-моста, соберите production-сборку React.",
+        info: [
+          "nginx отдаёт статику React и проксирует /api на FastAPI.",
+          "systemd перезапускает FastAPI при сбое.",
+          "HTTPS обязателен для cookie с флагом Secure.",
+        ],
       },
       {
-        title: "Create release documentation",
-        text: "Write the commands needed to build, run, deploy, and rollback.",
+        title: "Что дальше",
+        content: [
+          {
+            type: "note",
+            text: "Подробная пошаговая инструкция по первому выпуску появится в одном из следующих обновлений курса.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "lesson-18",
+    group: "Release",
+    number: "18",
+    title: "Обновление production",
+    subtitle: "Задокументируйте команды сборки, запуска, деплоя и отката.",
+    minutes: "16 мин",
+    level: "Средний",
+    complete: false,
+    need: ["Первый выпуск на Linux", "Доступ к серверу", "Git-тег релиза"],
+    goal: "у проекта будет документация с точными командами сборки, запуска, деплоя и отката.",
+    steps: [
+      {
+        title: "Опишите обновление и откат",
+        text: "Зафиксируйте точные команды, нужные для сборки, запуска, деплоя и отката на предыдущую версию.",
+        info: [
+          "Опишите точную команду сборки.",
+          "Опишите точную команду запуска.",
+          "Опишите точную команду деплоя.",
+          "Опишите точную команду отката на предыдущую версию.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "lesson-19",
+    group: "Release",
+    number: "19",
+    title: "Финальная практика",
+    subtitle: "Пройдите весь путь курса на одном примере: от 1C до production на Linux.",
+    minutes: "40 мин",
+    level: "Средний",
+    complete: false,
+    need: ["Все предыдущие уроки", "Рабочий стенд 1C + FastAPI + React", "Доступ к Linux-серверу"],
+    goal: "вы покажете весь путь курса на одном примере: от 1C до production на Linux.",
+    steps: [
+      {
+        title: "Пройдите итоговый критерий",
+        text: "Покажите весь путь курса на одном примере: от 1C до production на Linux.",
+        content: [
+          {
+            type: "checklist",
+            items: [
+              "Опубликованный HTTP-сервис 1C.",
+              "Параметры .env без секретов.",
+              "Таблицы users и sessions в SQL.",
+              "Вход и появление сессии.",
+              "CRUD товара и заявки.",
+              "Logout и истечение сессии.",
+              "Собственный Pull Request.",
+              "Обновлённая версия на Linux.",
+            ],
+          },
+        ],
+        ai: "Составь урок для разработчика 1C: создать серверную сессию в FastAPI, увидеть её в SQL через DB Browser, проверить logout и истечение срока.",
+        link: {
+          label: "Open full project-overview.md",
+          href: "project-overview.md",
+        },
       },
     ],
   },
