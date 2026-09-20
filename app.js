@@ -2633,19 +2633,473 @@ Access token должен быть зашифрованным.
     group: "FastAPI SQL",
     number: "10",
     title: "Вход и серверная сессия",
-    subtitle: "Реализуйте вход с защищённой cookie и серверной сессией в SQL.",
-    minutes: "22 мин",
+    subtitle: "Реализуйте вход через 1С с защищённой cookie и серверной сессией в SQL.",
+    minutes: "25 мин",
     level: "Средний",
     complete: false,
-    need: ["FastAPI app", "SQL database", "HTTPS plan"],
-    goal: "вы будете понимать, где хранится токен сессии и как FastAPI подтверждает вход пользователя.",
+    need: [
+      "FastAPI-проект из урока 09",
+      "Таблицы users и sessions",
+      "HTTP-сервис авторизации 1С",
+      "SQLite",
+      "DB Browser for SQLite",
+    ],
+    goal: "понять, где хранится локальный session token, как FastAPI создаёт сессию и как проверяет вход пользователя без хранения пароля.",
     steps: [
       {
-        title: "Создайте flow входа",
-        text: "FastAPI проверяет пароль, создаёт новую сессию, хранит в SQL только хеш токена и отправляет исходный токен только в cookie.",
+        title: "Понять flow входа",
+        text: "Пользователь вводит credentials в React. FastAPI передаёт их в 1С, получает access token и создаёт локальную серверную сессию.",
+        code: `React
+    |
+    | username + password
+    v
+FastAPI
+    |
+    | credentials
+    v
+1C authentication service
+    |
+    | access_token
+    v
+FastAPI создаёт session cookie
+
+После входа:
+
+React → FastAPI
+FastAPI → 1C с access token пользователя
+1C определяет пользователя, роль и права
+
+Важно:
+
+- пароль проверяет 1С;
+- FastAPI пароль не хранит;
+- роль принадлежит 1С;
+- React не получает access token 1С;
+- бизнес-данные остаются в 1С.`,
+      },
+      {
+        title: "Создать POST /api/auth/login",
+        text: "Маршрут принимает username и password, отправляет их в 1С и создаёт локальную сессию после успешного ответа.",
         code: `POST /api/auth/login
+
+Запрос в FastAPI:
+
+{
+  "username": "student01",
+  "password": "user-password"
+}
+
+FastAPI отправляет credentials в 1С:
+
+POST {{ONEC_BASE_URL}}/login
+
+{
+  "username": "student01",
+  "password": "user-password"
+}
+
+Пример ответа 1С:
+
+{
+  "success": true,
+  "message": "Успешная авторизация",
+  "token": "access-token-from-1c",
+  "expires_in": 3600,
+  "user_id": "123"
+}
+
+После успешного ответа:
+
+1. Создать или обновить users.
+2. Создать случайный session token.
+3. Сохранить в sessions только хеш session token.
+4. Сохранить access token 1С зашифрованным.
+5. Установить HttpOnly cookie.`,
+      },
+      {
+        title: "Настроить защищённую cookie",
+        text: "Исходный session token не попадает в SQL и не доступен JavaScript. Он хранится только в cookie браузера.",
+        code: `Cookie:
+
+Name: bridge_session
+HttpOnly: true
+Secure: true в production
+SameSite: Lax
+
+Локально:
+
+SESSION_COOKIE_SECURE=false
+
+В production:
+
+SESSION_COOKIE_SECURE=true
+
+FastAPI отправляет:
+
+Set-Cookie: bridge_session=<random-token>
+
+SQL хранит только:
+
+hash(bridge_session)
+
+React не должен читать cookie через document.cookie.`,
+      },
+      {
+        title: "Проверять GET /api/auth/me",
+        text: "Маршрут подтверждает, что текущая cookie связана с действующей серверной сессией.",
+        code: `GET /api/auth/me
+
+FastAPI:
+
+1. Читает bridge_session cookie.
+2. Вычисляет хеш токена.
+3. Находит запись в sessions.
+4. Проверяет revoked_at.
+5. Проверяет expires_at.
+6. Проверяет idle timeout.
+7. Проверяет активность пользователя.
+8. Возвращает безопасные данные пользователя.
+
+Успешный ответ:
+
+{
+  "authenticated": true,
+  "user": {
+    "username": "student01",
+    "onec_user_id": "123"
+  },
+  "session_expires_at": "2026-09-20T23:00:00Z"
+}
+
+Не возвращать:
+
+- password;
+- session token;
+- access token 1С;
+- encrypted token;
+- внутренние SQL-поля.`,
+      },
+      {
+        title: "Передавать access token в 1С",
+        text: "Каждый защищённый запрос из FastAPI в 1С использует access token текущего пользователя.",
+        code: `FastAPI находит зашифрованный access token
+в текущей записи sessions и отправляет:
+
+Authorization: Bearer <onec-access-token>
+
+1С по токену определяет:
+
+- пользователя;
+- роль;
+- доступные права;
+- разрешённые действия;
+- статус запроса.
+
+React не отправляет access token напрямую в 1С.`,
+      },
+      {
+        title: "Проверять срок действия сессии",
+        text: "Сессия завершается по абсолютному сроку или после длительного бездействия.",
+        code: `Параметры:
+
+SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+
+Абсолютный TTL:
+- сессия действует не более 8 часов.
+
+Idle timeout:
+- после 30 минут без запросов сессия завершается.
+
+Если сессия истекла:
+
+HTTP 401
+
+{
+  "error": {
+    "code": "session_expired",
+    "message": "Сессия завершена"
+  }
+}
+
+Если access token 1С истёк:
+
+HTTP 401
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+FastAPI не хранит пароль и не выполняет автоматический вход от имени пользователя.`,
+      },
+      {
+        title: "Создать POST /api/auth/logout",
+        text: "Logout отзывает серверную сессию и очищает cookie.",
+        code: `POST /api/auth/logout
+
+FastAPI:
+
+1. Находит текущую запись sessions.
+2. Устанавливает revoked_at.
+3. Очищает bridge_session cookie.
+4. Возвращает успешный ответ.
+
+Ответ:
+
+{
+  "success": true
+}
+
+После logout:
+
+GET /api/auth/me
+
+возвращает HTTP 401.
+
+Пользователь остаётся в таблице users.
+Бизнес-данные в 1С не удаляются.`,
+      },
+      {
+        title: "Проверить flow через DB Browser",
+        text: "Сравните состояние базы до входа, после входа и после logout.",
+        code: `Проверка:
+
+1. Откройте data/bridge.db в DB Browser.
+2. Выполните POST /api/auth/login.
+3. Обновите таблицу users.
+4. Обновите таблицу sessions.
+5. Проверьте created_at и expires_at.
+6. Выполните GET /api/auth/me.
+7. Выполните POST /api/auth/logout.
+8. Проверьте revoked_at.
+
+В sessions должны быть видны:
+
+- user_id;
+- session_token_hash;
+- created_at;
+- last_activity_at;
+- expires_at;
+- onec_token_expires_at;
+- revoked_at.
+
+Исходный session token и пароль пользователя
+не должны быть видны в базе.`,
+      },
+      {
+        title: "Проверить безопасность",
+        text: "Серверная cookie-сессия защищает токен от доступа JavaScript и не передаёт access token 1С в браузер.",
+        code: `Обязательные правила:
+
+- использовать случайный непрозрачный session token;
+- хранить только хеш токена;
+- использовать HttpOnly;
+- использовать Secure в production;
+- использовать SameSite=Lax;
+- включить HTTPS в production;
+- не хранить пароль;
+- не использовать localStorage для session token;
+- не передавать access token 1С в React;
+- не записывать токены и пароли в логи;
+- ограничить количество попыток login;
+- добавить CSRF-защиту для изменяющих запросов;
+- отзывать сессию после logout.`,
+      },
+      {
+        title: "Prompt для Codex или Claude Code",
+        text: "Запускайте AI-агента внутри папки bridge, где находится Python-проект.",
+        content: [
+          { type: "command", label: "Перейти в папку bridge", code: "cd bridge" },
+          { type: "command", label: "Запустить Codex", code: "codex" },
+          { type: "command", label: "Или запустить Claude Code", code: "claude" },
+          {
+            type: "snippet",
+            label: "Prompt для входа и серверной сессии",
+            body: `Ты работаешь в текущей папке bridge.
+
+Сначала изучи существующий проект и таблицы users и sessions.
+Не изменяй frontend, конфигурацию 1С и файлы за пределами текущей папки.
+
+Реализуй вход и серверную сессию по архитектуре:
+
+React → FastAPI → HTTP-сервис 1С
+
+Важно:
+
+- пароль проверяет 1С;
+- FastAPI не проверяет пароль локально;
+- FastAPI не хранит пароль;
+- роли и права принадлежат 1С;
+- FastAPI хранит только users и sessions;
+- React не получает access token 1С;
+- session token передаётся только через HttpOnly cookie.
+
+Создай или проверь маршруты:
+
+POST /api/auth/login
 GET  /api/auth/me
-POST /api/auth/logout`,
+POST /api/auth/logout
+
+POST /api/auth/login:
+
+1. Прими username и password.
+2. Передай их в login endpoint 1С.
+3. Получи success, token, expires_in и user_id согласно фактическому контракту 1С.
+4. Не сохраняй password.
+5. Создай или обнови users.
+6. Создай случайный session token через secrets.token_urlsafe.
+7. Сохрани в sessions только хеш session token.
+8. Сохрани access token 1С зашифрованным.
+9. Сохрани onec_token_expires_at.
+10. Установи HttpOnly cookie bridge_session.
+11. Не возвращай access token в response.
+
+Таблица users должна содержать:
+
+- id;
+- username;
+- onec_user_id;
+- is_active;
+- created_at;
+- updated_at.
+
+Не добавляй:
+
+- password;
+- password_hash;
+- role;
+- access_token.
+
+Таблица sessions должна содержать:
+
+- id;
+- user_id;
+- session_token_hash;
+- onec_access_token_ciphertext;
+- onec_token_expires_at;
+- created_at;
+- last_activity_at;
+- expires_at;
+- revoked_at.
+
+GET /api/auth/me:
+
+1. Прочитай bridge_session cookie.
+2. Вычисли хеш.
+3. Найди сессию.
+4. Проверь revoked_at.
+5. Проверь абсолютный срок expires_at.
+6. Проверь idle timeout.
+7. Проверь is_active пользователя.
+8. Верни только безопасные данные пользователя.
+
+Успешный ответ:
+
+{
+  "authenticated": true,
+  "user": {
+    "username": "student01",
+    "onec_user_id": "123"
+  }
+}
+
+POST /api/auth/logout:
+
+1. Найди текущую сессию.
+2. Установи revoked_at.
+3. Удали или очисти bridge_session cookie.
+4. Не удаляй пользователя из users.
+5. Не удаляй бизнес-данные в 1С.
+
+Настройки:
+
+SESSION_COOKIE_NAME=bridge_session
+SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAMESITE=lax
+
+Cookie должна иметь:
+
+- HttpOnly=true;
+- Secure=true в production;
+- SameSite=Lax.
+
+Ошибки:
+
+Отсутствует cookie или сессия:
+
+HTTP 401
+
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Требуется авторизация"
+  }
+}
+
+Истёк idle timeout:
+
+HTTP 401
+
+{
+  "error": {
+    "code": "session_idle_timeout",
+    "message": "Сессия завершена из-за бездействия"
+  }
+}
+
+Истёк access token 1С:
+
+HTTP 401
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+Проверь:
+
+python -m compileall app
+python -m uvicorn app.main:app --reload
+
+Проверь flow:
+
+1. POST /api/auth/login.
+2. Убедись, что установлена bridge_session cookie.
+3. GET /api/auth/me.
+4. Проверь users и sessions в data/bridge.db через DB Browser.
+5. POST /api/auth/logout.
+6. Повтори GET /api/auth/me и проверь HTTP 401.
+7. Проверь, что после logout в sessions заполнено revoked_at.
+
+Никогда не показывай:
+
+- password;
+- session token;
+- access token 1С;
+- ключ шифрования;
+- секреты из .env.
+
+После работы верни:
+
+- список изменённых файлов;
+- описание login flow;
+- описание session validation;
+- описание logout flow;
+- результаты проверки;
+- найденные ограничения.`,
+          },
+          {
+            type: "note",
+            text: "Результат урока: пользователь входит через 1С, FastAPI создаёт локальную сессию, хранит в SQL только хеш session token, а исходный токен передаёт браузеру только через защищённую HttpOnly cookie.",
+          },
+        ],
       },
     ],
   },
