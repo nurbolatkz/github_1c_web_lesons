@@ -4,69 +4,99 @@ const lessons = [
     group: "Overview",
     number: "OV",
     title: "Project overview",
-    subtitle: "От AI-прототипа до рабочего портала на React, FastAPI и 1C.",
+    subtitle: "Простой CRUD от 1C до production: React, FastAPI, SQL-сессии и Linux.",
     minutes: "12 min",
     level: "Overview",
     complete: true,
-    need: ["Опыт разработки в 1C", "Понимание бизнес-документов", "Готовность работать через Git"],
-    goal: "вы поймёте цель курса, учебный бизнес-сценарий, архитектуру и критерий выпуска ученика.",
+    need: ["Опыт разработки в 1C", "Git и GitHub", "Windows для разработки", "Linux для production"],
+    goal: "вы поймёте основной маршрут курса: 1C HTTP-сервис, FastAPI, SQL-сессии, React CRUD и выпуск на Linux.",
     steps: [
       {
-        title: "Цель курса",
-        text: "Научить разработчика 1C создавать и сопровождать production веб-приложение с помощью AI coding agent, сохраняя бизнес-данные и бизнес-правила в 1C.",
+        title: "Цель и границы курса",
+        text: "Практический курс для разработчиков 1C: создать простой справочник и документ, опубликовать HTTP-сервис базы, настроить FastAPI и SQL, собрать React-интерфейс с AI-агентом и выпустить приложение на Linux.",
         info: [
-          "Курс ведётся на русском языке.",
-          "Основная архитектура: React + TypeScript -> FastAPI -> HTTP-сервис 1C.",
-          "Разработка выполняется в Windows, production React и FastAPI размещаются на Linux.",
-          "Docker и Docker Compose пока не входят в базовый курс.",
+          "1C хранит учебный справочник и документ.",
+          "FastAPI хранит пользователей и серверные сессии в собственной SQL-базе.",
+          "React + TypeScript работает через /api на одном домене.",
+          "Production: Linux, nginx, systemd и HTTPS.",
+          "Docker, SSO, Keycloak и сложные scopes не входят в базовый курс.",
         ],
       },
       {
-        title: "Как преподавать разработчикам 1C",
-        text: "Новые веб-понятия вводятся через знакомые 1C-задачи: документы, справочники, формы, права, транзакции и журнал регистрации.",
+        title: "Сквозная практика",
+        text: "Учебный результат: пользователь входит на сайт, создаёт товар, выбирает его в заявке, сохраняет изменения и видит тот же результат в 1C.",
         code: `Форма списка        -> React list page
 Форма объекта       -> Detail page и Create/Edit form
 Форма выбора        -> ReferencePicker
 Ссылка на объект    -> стабильный ID в API
-Права доступа       -> permission + scope + состояние документа
-Журнал регистрации  -> logs + request_id + бизнес-история`,
+Проверка заполнения -> React + FastAPI + бизнес-правила 1C
+Журнал регистрации  -> Network, логи, SQL и 1C`,
       },
       {
         title: "Учебный проект",
-        text: "Вместо абстрактного каталога товаров используется бизнес-сценарий портала заявок на транспортировку.",
-        code: `Заявка на транспортировку
-  -> черновик
-  -> отправка
-  -> согласование или возврат
-  -> исправление
-  -> повторная отправка`,
+        text: "Базовый проект состоит из простого справочника товаров и документа заявки. Удаление в уроках означает пометку удаления, а не физическое удаление данных.",
+        code: `Справочник: Товары
+  -> список
+  -> просмотр
+  -> создание
+  -> изменение
+  -> пометка удаления
+
+Документ: Заявка
+  -> шапка
+  -> строки товаров
+  -> сохранение
+  -> проверка результата в 1C`,
       },
       {
-        title: "Архитектурная граница",
-        text: "React отвечает за интерфейс, FastAPI за контролируемый API и адаптацию, 1C за бизнес-данные, права и бизнес-правила.",
-        code: `React SPA
-  -> HTTPS /api
-FastAPI bridge
-  -> доверенный контекст и сервисный доступ
+        title: "Архитектура приложения",
+        text: "React не обращается к 1C напрямую. FastAPI проверяет пользователя и сессию, нормализует ошибки, вызывает опубликованный HTTP-сервис 1C и возвращает frontend-friendly JSON.",
+        code: `React: товары и заявки
+  -> HTTPS /api и cookie сессии
+FastAPI
+  -> SQL: users, sessions
+  -> служебная учётная запись
 HTTP-сервис 1C
-  -> документы, профили, роли, файлы, история`,
+  -> товары и заявки в 1C
+DB Browser
+  -> просмотр учебной SQL-базы`,
+      },
+      {
+        title: "Рекомендуемая авторизация",
+        text: "Для одного React-приложения и FastAPI на одном домене выбран простой маршрут: логин/пароль, случайный токен в защищённой cookie и серверная сессия в SQL.",
+        code: `Браузер
+  -> cookie HttpOnly, Secure, SameSite=Lax
+SQL users
+  -> пользователь, хеш пароля, роль, активность
+SQL sessions
+  -> хеш токена, user_id, created_at, expires_at, revoked_at
+React
+  -> данные текущего пользователя; секретный токен JavaScript не читает`,
+        info: [
+          "Стартовая политика: максимум 8 часов и 30 минут бездействия.",
+          "Пароли хешируются через Argon2id.",
+          "Изменяющие запросы требуют CSRF-защиты и проверки Origin.",
+          "Logout отзывает сессию в SQL; следующий запрос больше не проходит.",
+          "OAuth2 и access/refresh JWT для первого приложения не обязательны.",
+        ],
       },
       {
         title: "План курса",
-        text: "Обновлённая программа расширяет курс до 24 коротких уроков в 6 блоках, чтобы production-навыки не оказались в одной перегруженной финальной главе.",
+        text: "Программа ведёт от инструментов и публикации HTTP-сервиса 1C к .env, SQL, серверной сессии, CRUD-интерфейсу, проверке и выпуску на Linux.",
         info: [
-          "I. Инструменты и командная работа",
-          "II. Веб-основа, архитектура и первая интеграция",
-          "III. Предметный интерфейс с AI",
-          "IV. API, 1C и доступ",
-          "V. Надёжный бизнес-сценарий",
-          "VI. Проверка, production и самостоятельность",
+          "Инструменты, GitHub, ветки и review.",
+          "HTTP-сервис и CRUD в 1C.",
+          "Конфигурация .env и запуск FastAPI.",
+          "SQL-база, users, sessions и DB Browser.",
+          "Вход, срок действия, бездействие и logout.",
+          "React CRUD товара и заявки.",
+          "Проверка после изменений и выпуск Windows -> Linux.",
         ],
       },
       {
         title: "Критерий выпуска ученика",
-        text: "Ученик должен поставить AI-агенту ограниченную задачу, понять изменения, проверить их локально, провести через ветку и Pull Request, обновить production на Linux и подтвердить результат.",
-        ai: "Составь план урока для разработчика 1C: один бизнес-сценарий, одна GitHub-задача, одна ветка, один проверяемый результат.",
+        text: "Ученик показывает опубликованный HTTP-сервис, параметры .env без секретов, таблицы users/sessions, вход и появление сессии, CRUD товара и заявки, logout/истечение сессии, свой PR и обновлённую версию на Linux.",
+        ai: "Составь урок для разработчика 1C: создать серверную сессию в FastAPI, увидеть её в SQL через DB Browser, проверить logout и истечение срока.",
         link: {
           label: "Open full project-overview.md",
           href: "project-overview.md",
@@ -399,6 +429,61 @@ python -m venv .venv
     id: "lesson-10",
     group: "Connect to 1C",
     number: "10",
+    title: "Server sessions",
+    subtitle: "Implement login with a protected cookie and SQL-backed sessions.",
+    minutes: "24 min",
+    level: "Intermediate",
+    complete: false,
+    need: ["FastAPI app", "SQL database", "DB Browser for SQLite", "HTTPS plan"],
+    goal: "you will understand where the session token lives, how expiry works, and how logout revokes access.",
+    steps: [
+      {
+        title: "Choose the session model",
+        text: "For React and FastAPI on one domain, use login/password, a random opaque session token in a protected cookie, and a server-side session row in SQL.",
+        code: `Browser
+  -> random token in HttpOnly Secure SameSite=Lax cookie
+FastAPI
+  -> checks password, session, expiry, revocation and role
+SQL users
+  -> user, password hash, role, active flag
+SQL sessions
+  -> token hash, user, created_at, expires_at, revoked_at`,
+      },
+      {
+        title: "Create login flow",
+        text: "FastAPI verifies the password, creates a new session, stores only a token hash in SQL, and sends the original token only as a cookie.",
+        code: `POST /api/auth/login
+GET  /api/auth/me
+POST /api/auth/logout`,
+      },
+      {
+        title: "Set session policy",
+        text: "Use an absolute maximum and an idle timeout so students can observe expiry and revocation in DB Browser.",
+        code: `SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+COOKIE_SECURE=true`,
+      },
+      {
+        title: "Add security controls",
+        text: "Use HTTPS, login rate limits, Argon2id password hashing, CSRF protection for changing requests, and safe error messages.",
+        info: [
+          "JavaScript does not read the secret token.",
+          "Logout sets revoked_at and clears the cookie.",
+          "Blocked users and password changes revoke existing sessions.",
+          "OAuth2 and access/refresh JWT are not required for the first application.",
+        ],
+      },
+      {
+        title: "Verify in SQL",
+        text: "Use DB Browser for SQLite in the training environment to inspect users, sessions, expiry, last activity and revocation.",
+        ai: "Create a FastAPI lesson that demonstrates login, SQL-backed sessions, logout, idle timeout and DB Browser verification.",
+      },
+    ],
+  },
+  {
+    id: "lesson-11",
+    group: "Connect to 1C",
+    number: "11",
     title: "1C HTTP service",
     subtitle: "Expose controlled 1C endpoints for the Python bridge service.",
     minutes: "28 min",
@@ -425,9 +510,9 @@ ONEC_PASSWORD=`,
     ],
   },
   {
-    id: "lesson-11",
+    id: "lesson-12",
     group: "Connect to 1C",
-    number: "11",
+    number: "12",
     title: "Connect & release",
     subtitle: "Wire React, Python, and 1C together, then prepare the first release.",
     minutes: "35 min",
