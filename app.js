@@ -1,5 +1,80 @@
 const lessons = [
   {
+    id: "project-overview",
+    group: "Overview",
+    number: "OV",
+    title: "Project overview",
+    subtitle: "От AI-прототипа до рабочего портала на React, FastAPI и 1C.",
+    minutes: "12 min",
+    level: "Overview",
+    complete: true,
+    need: ["Опыт разработки в 1C", "Понимание бизнес-документов", "Готовность работать через Git"],
+    goal: "вы поймёте цель курса, учебный бизнес-сценарий, архитектуру и критерий выпуска ученика.",
+    steps: [
+      {
+        title: "Цель курса",
+        text: "Научить разработчика 1C создавать и сопровождать production веб-приложение с помощью AI coding agent, сохраняя бизнес-данные и бизнес-правила в 1C.",
+        info: [
+          "Курс ведётся на русском языке.",
+          "Основная архитектура: React + TypeScript -> FastAPI -> HTTP-сервис 1C.",
+          "Разработка выполняется в Windows, production React и FastAPI размещаются на Linux.",
+          "Docker и Docker Compose пока не входят в базовый курс.",
+        ],
+      },
+      {
+        title: "Как преподавать разработчикам 1C",
+        text: "Новые веб-понятия вводятся через знакомые 1C-задачи: документы, справочники, формы, права, транзакции и журнал регистрации.",
+        code: `Форма списка        -> React list page
+Форма объекта       -> Detail page и Create/Edit form
+Форма выбора        -> ReferencePicker
+Ссылка на объект    -> стабильный ID в API
+Права доступа       -> permission + scope + состояние документа
+Журнал регистрации  -> logs + request_id + бизнес-история`,
+      },
+      {
+        title: "Учебный проект",
+        text: "Вместо абстрактного каталога товаров используется бизнес-сценарий портала заявок на транспортировку.",
+        code: `Заявка на транспортировку
+  -> черновик
+  -> отправка
+  -> согласование или возврат
+  -> исправление
+  -> повторная отправка`,
+      },
+      {
+        title: "Архитектурная граница",
+        text: "React отвечает за интерфейс, FastAPI за контролируемый API и адаптацию, 1C за бизнес-данные, права и бизнес-правила.",
+        code: `React SPA
+  -> HTTPS /api
+FastAPI bridge
+  -> доверенный контекст и сервисный доступ
+HTTP-сервис 1C
+  -> документы, профили, роли, файлы, история`,
+      },
+      {
+        title: "План курса",
+        text: "Обновлённая программа расширяет курс до 24 коротких уроков в 6 блоках, чтобы production-навыки не оказались в одной перегруженной финальной главе.",
+        info: [
+          "I. Инструменты и командная работа",
+          "II. Веб-основа, архитектура и первая интеграция",
+          "III. Предметный интерфейс с AI",
+          "IV. API, 1C и доступ",
+          "V. Надёжный бизнес-сценарий",
+          "VI. Проверка, production и самостоятельность",
+        ],
+      },
+      {
+        title: "Критерий выпуска ученика",
+        text: "Ученик должен поставить AI-агенту ограниченную задачу, понять изменения, проверить их локально, провести через ветку и Pull Request, обновить production на Linux и подтвердить результат.",
+        ai: "Составь план урока для разработчика 1C: один бизнес-сценарий, одна GitHub-задача, одна ветка, один проверяемый результат.",
+        link: {
+          label: "Open full project-overview.md",
+          href: "project-overview.md",
+        },
+      },
+    ],
+  },
+  {
     id: "lesson-00",
     group: "Getting started",
     number: "00",
@@ -389,7 +464,7 @@ const icons = {
 };
 
 const state = {
-  lessonId: location.hash?.replace("#", "") || "lesson-03",
+  lessonId: location.hash?.replace("#", "") || "project-overview",
   query: "",
 };
 
@@ -572,6 +647,7 @@ function renderStep(lesson) {
           ${step.code ? renderCode(step.code) : ""}
           ${step.ai ? renderAi(step.ai) : ""}
           ${step.info ? renderInfo(step.info) : ""}
+          ${step.link ? renderLink(step.link) : ""}
         </div>
       </section>
     `;
@@ -609,6 +685,15 @@ function renderInfo(items) {
     <div class="info-card">
       <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
     </div>
+  `;
+}
+
+function renderLink(link) {
+  return `
+    <a class="doc-link" href="${escapeAttribute(link.href)}">
+      <span>${escapeHtml(link.label)}</span>
+      ${icons.arrowRight}
+    </a>
   `;
 }
 

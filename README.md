@@ -13,6 +13,7 @@ This repository is a GitHub Pages lesson site for building repeatable projects w
 .
 ├── _config.yml
 ├── index.md
+├── project-overview.md
 └── lessons/
     ├── 00-course-plan.md
     ├── 01-toolchain-installation.md
@@ -34,4 +35,3 @@ The site will be available at:
 ```text
 https://<github-user>.github.io/<repository-name>/
 ```
-

@@ -11,6 +11,7 @@ The goal is to make every project use the same predictable architecture, command
 
 ## Lessons
 
+0. [Project overview](project-overview.md)
 1. [Course plan](lessons/00-course-plan.md)
 2. [Toolchain installation: Codex CLI, Claude Code, GitHub CLI, Node, Python](lessons/01-toolchain-installation.md)
 3. [Standard project architecture](lessons/02-standard-project-architecture.md)
@@ -45,4 +46,3 @@ Python bridge backend
 - Codex CLI sign-in: <https://help.openai.com/en/articles/11381614-api-codex-cli-and-sign-in-with-chatgpt>
 - Claude Code setup: <https://docs.anthropic.com/en/docs/claude-code/getting-started>
 - GitHub CLI Windows install: <https://github.com/cli/cli/blob/trunk/docs/install_windows.md>
-

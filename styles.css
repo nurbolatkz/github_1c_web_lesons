@@ -610,6 +610,26 @@ code {
   padding-left: 20px;
 }
 
+.doc-link {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 18px;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  font-weight: 800;
+}
+
+.doc-link:hover,
+.doc-link:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
 .lesson-footer {
   display: flex;
   align-items: center;
