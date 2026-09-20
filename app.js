@@ -2143,29 +2143,488 @@ http://127.0.0.1:8000/health
     group: "FastAPI SQL",
     number: "09",
     title: "SQL-база и DB Browser",
-    subtitle: "Спроектируйте таблицы users и sessions и проверьте их в DB Browser.",
-    minutes: "20 мин",
+    subtitle: "Создайте таблицы пользователей и сессий для авторизации через 1С.",
+    minutes: "25 мин",
     level: "Средний",
     complete: false,
-    need: ["FastAPI app", "SQL database", "DB Browser for SQLite"],
-    goal: "вы будете понимать структуру таблиц users и sessions и уметь проверять их в DB Browser.",
+    need: ["FastAPI-проект из урока 08", "SQLite", "DB Browser for SQLite", "Опубликованный HTTP-сервис авторизации 1С"],
+    goal: "создать только таблицы users и sessions, сохранять локальную сессию пользователя и проверять её состояние через DB Browser.",
     steps: [
       {
-        title: "Спроектируйте таблицы",
-        text: "Для входа и сессий на одном домене достаточно двух таблиц.",
-        code: `Браузер
-  -> случайный токен в cookie HttpOnly, Secure, SameSite=Lax
+        title: "Понять поток авторизации",
+        text: "Пароль проверяет 1С. FastAPI только передаёт credentials в 1С, получает access token и создаёт локальную сессию.",
+        code: `React
+    |
+    | username + password
+    v
 FastAPI
-  -> проверяет пароль, сессию, срок действия, отзыв и роль
-SQL users
-  -> пользователь, хеш пароля, роль, флаг активности
-SQL sessions
-  -> хеш токена, пользователь, created_at, expires_at, revoked_at`,
+    |
+    | credentials
+    v
+1C login HTTP-service
+    |
+    | access_token
+    v
+FastAPI создаёт HttpOnly session cookie
+
+После входа:
+
+React → FastAPI
+FastAPI → 1C с access token текущего пользователя
+1C определяет пользователя, роль и права
+
+FastAPI не хранит бизнес-данные.
+Товары и заявки остаются в 1С.`,
       },
       {
-        title: "Проверьте данные в DB Browser",
-        text: "Используйте DB Browser for SQLite в учебном окружении, чтобы посмотреть пользователей, сессии, срок действия, последнюю активность и отзыв.",
-        ai: "Создай урок FastAPI, который показывает вход, сессии в SQL, logout, простой idle timeout и проверку в DB Browser.",
+        title: "Создать таблицу users",
+        text: "Таблица users хранит только локальную связь с пользователем 1С. Пароль и роль в эту таблицу не добавляются.",
+        code: `Таблица: users
+
+Поля:
+
+- id
+- username
+- onec_user_id
+- is_active
+- created_at
+- updated_at
+
+Не хранить:
+
+- password
+- password_hash
+- role
+- access_token
+- бизнес-данные
+
+Пароль проверяется только в 1С.
+Роли и права принадлежат 1С.`,
+      },
+      {
+        title: "Создать таблицу sessions",
+        text: "Таблица sessions связывает локальную cookie-сессию с пользователем и access token 1С.",
+        code: `Таблица: sessions
+
+Поля:
+
+- id
+- user_id
+- session_token_hash
+- onec_access_token_ciphertext
+- onec_token_expires_at
+- created_at
+- last_activity_at
+- expires_at
+- revoked_at
+
+session_token_hash:
+- хеш случайного токена из cookie.
+
+onec_access_token_ciphertext:
+- зашифрованный access token 1С;
+- не возвращается в React;
+- не записывается в логи.
+
+onec_token_expires_at:
+- срок действия access token 1С.
+
+revoked_at:
+- время отзыва сессии после logout.`,
+      },
+      {
+        title: "Настроить срок действия сессии",
+        text: "Сессия должна иметь абсолютный срок действия и idle timeout.",
+        code: `.env
+
+SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+SESSION_COOKIE_NAME=bridge_session
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAMESITE=lax
+
+Абсолютный срок:
+- максимальная продолжительность сессии — 8 часов.
+
+Idle timeout:
+- если пользователь не выполнял запросы 30 минут, сессия завершается.
+
+В production:
+
+SESSION_COOKIE_SECURE=true
+
+Cookie должна быть:
+
+- HttpOnly;
+- Secure;
+- SameSite=Lax.`,
+      },
+      {
+        title: "Создать сессию после входа",
+        text: "После успешной авторизации в 1С FastAPI сохраняет пользователя, токен и локальную сессию.",
+        code: `POST /api/auth/login
+
+1. React отправляет username и password в FastAPI.
+2. FastAPI передаёт credentials в 1С.
+3. 1С возвращает access token.
+4. FastAPI создаёт или обновляет users.
+5. FastAPI сохраняет зашифрованный access token в sessions.
+6. FastAPI создаёт случайный session token.
+7. В SQL сохраняется только хеш session token.
+8. Session token отправляется в HttpOnly cookie.
+
+Пароль пользователя не сохраняется.`,
+      },
+      {
+        title: "Проверять сессию в защищённом запросе",
+        text: "Каждый запрос к 1С должен использовать access token текущего пользователя.",
+        code: `1. FastAPI получает bridge_session из cookie.
+2. Находит хеш токена в sessions.
+3. Проверяет revoked_at.
+4. Проверяет expires_at.
+5. Проверяет last_activity_at.
+6. Получает access token 1С.
+7. Отправляет запрос в 1С:
+
+Authorization: Bearer <onec-access-token>
+
+Если access token истёк, FastAPI возвращает:
+
+HTTP 401
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+FastAPI не хранит пароль для автоматического повторного входа.`,
+      },
+      {
+        title: "Реализовать logout",
+        text: "Logout отзывает сессию в SQL и удаляет cookie браузера.",
+        code: `POST /api/auth/logout
+
+Действия FastAPI:
+
+1. Найти текущую сессию.
+2. Установить revoked_at.
+3. Очистить bridge_session cookie.
+4. Не удалять пользователя из users.
+5. Не удалять данные в 1С.
+
+После logout запрос:
+
+GET /api/auth/me
+
+должен вернуть HTTP 401.`,
+      },
+      {
+        title: "Открыть базу в DB Browser",
+        text: "Проверьте структуру таблиц и состояние сессий визуально.",
+        code: `1. Запустите FastAPI и выполните login.
+2. Найдите файл:
+
+data/bridge.db
+
+3. Откройте его в DB Browser for SQLite.
+4. Откройте вкладку Database Structure.
+5. Убедитесь, что существуют только:
+
+- users
+- sessions
+
+6. Откройте Browse Data.
+7. Проверьте:
+
+users:
+- username;
+- onec_user_id;
+- is_active;
+- created_at.
+
+sessions:
+- user_id;
+- created_at;
+- last_activity_at;
+- expires_at;
+- onec_token_expires_at;
+- revoked_at.
+
+Access token должен храниться зашифрованным.
+Не копируйте его в сообщения, логи или frontend.`,
+      },
+      {
+        title: "Проверить сессии SQL-запросами",
+        text: "Используйте вкладку Execute SQL в DB Browser для проверки срока действия и отзыва сессий.",
+        code: `Пользователи:
+
+SELECT
+  id,
+  username,
+  onec_user_id,
+  is_active,
+  created_at
+FROM users;
+
+Активные сессии:
+
+SELECT
+  id,
+  user_id,
+  created_at,
+  last_activity_at,
+  expires_at,
+  onec_token_expires_at,
+  revoked_at
+FROM sessions
+WHERE revoked_at IS NULL;
+
+Отозванные сессии:
+
+SELECT
+  id,
+  user_id,
+  revoked_at
+FROM sessions
+WHERE revoked_at IS NOT NULL;`,
+      },
+      {
+        title: "Проверить безопасность",
+        text: "SQL хранит только состояние авторизации. Бизнес-данные и роли остаются в 1С.",
+        code: `Обязательные правила:
+
+- не хранить пароль;
+- не хранить password_hash;
+- не хранить роль в users;
+- не возвращать access token в React;
+- не записывать token в логи;
+- хранить session token только в виде хеша;
+- шифровать access token 1С;
+- использовать HttpOnly cookie;
+- использовать HTTPS в production;
+- применять rate limit для login;
+- защищать изменяющие запросы от CSRF;
+- отзывать сессии заблокированного пользователя.`,
+      },
+      {
+        title: "Prompt для Codex или Claude Code",
+        text: "Запускайте AI-агента внутри папки bridge, где находится Python-проект.",
+        content: [
+          { type: "command", label: "Перейти в папку bridge", code: "cd bridge" },
+          { type: "command", label: "Запустить Codex", code: "codex" },
+          { type: "command", label: "Или запустить Claude Code", code: "claude" },
+          {
+            type: "snippet",
+            label: "Prompt для реализации users/sessions",
+            body: `Ты работаешь в текущей папке bridge.
+
+Сначала изучи существующую структуру проекта.
+Не изменяй frontend, конфигурацию 1С и файлы за пределами текущей папки.
+
+Создай урок 09 для FastAPI-проекта:
+
+«SQL-база и DB Browser»
+
+Архитектура:
+
+React → FastAPI → HTTP-сервис 1С
+
+Главное правило:
+
+- пароль проверяет 1С;
+- FastAPI не хранит пароль;
+- роли и права принадлежат 1С;
+- FastAPI хранит только локального пользователя и сессии;
+- товары, заявки и другие бизнес-данные не хранятся в SQL FastAPI.
+
+Используй ровно две таблицы:
+
+1. users
+2. sessions
+
+Не создавай дополнительные таблицы:
+- onec_tokens;
+- products;
+- requests;
+- roles;
+- permissions;
+- documents;
+- warehouses;
+- business records.
+
+Таблица users:
+
+- id
+- username
+- onec_user_id
+- is_active
+- created_at
+- updated_at
+
+Не добавляй в users:
+
+- password;
+- password_hash;
+- role;
+- access_token.
+
+Таблица sessions:
+
+- id
+- user_id;
+- session_token_hash;
+- onec_access_token_ciphertext;
+- onec_token_expires_at;
+- created_at;
+- last_activity_at;
+- expires_at;
+- revoked_at.
+
+Требования к login:
+
+POST /api/auth/login
+
+1. Получить username и password.
+2. Передать credentials в HTTP-сервис авторизации 1С.
+3. Получить access token.
+4. Создать или обновить пользователя в users.
+5. Зашифровать access token.
+6. Создать запись sessions.
+7. Создать случайный session token через secrets.token_urlsafe.
+8. Сохранить в SQL только хеш session token.
+9. Установить HttpOnly cookie.
+10. Не возвращать access token в React.
+11. Не хранить пароль.
+12. Не писать password и token в логи.
+
+Cookie:
+
+- HttpOnly=true;
+- Secure берётся из настроек;
+- SameSite=Lax;
+- имя берётся из SESSION_COOKIE_NAME.
+
+Добавь настройки:
+
+DATABASE_URL=sqlite+aiosqlite:///./data/bridge.db
+SESSION_COOKIE_NAME=bridge_session
+SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAMESITE=lax
+
+Реализуй:
+
+GET /health
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/me
+
+Проверка сессии должна:
+
+- прочитать cookie;
+- вычислить хеш;
+- найти session;
+- проверить revoked_at;
+- проверить expires_at;
+- проверить last_activity_at;
+- проверить активность пользователя;
+- получить access token 1С;
+- передать access token в защищённый запрос к 1С.
+
+Передача токена в 1С:
+
+Authorization: Bearer <onec-access-token>
+
+Если access token 1С истёк:
+
+- вернуть HTTP 401;
+- использовать код reauth_required;
+- не хранить пароль;
+- не выполнять бесконечные повторы;
+- не создавать новую сессию автоматически без повторного login.
+
+Logout должен:
+
+- установить revoked_at;
+- очистить cookie;
+- оставить пользователя в users;
+- не удалять данные в 1С.
+
+Добавь простой idle timeout:
+
+- SESSION_IDLE_TTL_SECONDS=1800;
+- если last_activity_at слишком старый, вернуть HTTP 401;
+- использовать код session_idle_timeout;
+- не раскрывать внутренние детали.
+
+Добавь миграцию или безопасное создание этих двух таблиц.
+Не используй SQLAlchemy create_all как единственный способ изменения уже существующей схемы, если в проекте уже настроены миграции.
+
+Проверь:
+
+python -m compileall app
+
+python -m uvicorn app.main:app --reload
+
+Проверь login, me и logout через Swagger или Postman.
+
+После login открой базу:
+
+data/bridge.db
+
+В DB Browser for SQLite проверь:
+
+- Database Structure;
+- таблицы users и sessions;
+- created_at;
+- last_activity_at;
+- expires_at;
+- onec_token_expires_at;
+- revoked_at.
+
+Access token должен быть зашифрованным.
+Не показывай его в response, логах или итоговом отчёте.
+
+Добавь безопасные ошибки:
+
+401:
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Требуется авторизация"
+  }
+}
+
+401 после истечения токена:
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+После работы верни:
+
+- список изменённых файлов;
+- структуру users;
+- структуру sessions;
+- описание login flow;
+- описание logout flow;
+- команды проверки;
+- результаты проверки DB Browser;
+- найденные ограничения.
+
+Не показывай пароли, access token, session token или ключ шифрования.`,
+          },
+          {
+            type: "note",
+            text: "Результат урока: FastAPI использует ровно две SQL-таблицы — users и sessions. Пароль проверяется в 1С, access token передаётся в 1С, а состояние локальной сессии можно проверить через DB Browser.",
+          },
+        ],
       },
     ],
   },
