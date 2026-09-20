@@ -338,6 +338,12 @@ git push -u origin main`,
         text: "Одна задача должна иметь одну Issue, одну рабочую ветку и один Pull Request. Ветка main используется для согласованного состояния проекта.",
         content: [
           {
+            type: "video",
+            id: "SZARWakrCro",
+            title: "Как открыть и правильно закрыть issues",
+            label: "Видео: зачем нужны Issues и как их правильно закрывать",
+          },
+          {
             type: "snippet",
             label: "Пример Issue",
             body: `Название: Добавить поиск товаров
@@ -352,6 +358,12 @@ git push -u origin main`,
 - поиск работает на desktop и mobile;
 - существующие сценарии не сломались;
 - проверка описана в Pull Request.`,
+          },
+          {
+            type: "video",
+            id: "wR3gXOiRm10",
+            title: "Git branch — работа с ветками",
+            label: "Видео: работа с ветками Git",
           },
           { type: "command", label: "Создать ветку задачи", code: "git switch -c feat/product-search" },
           {
