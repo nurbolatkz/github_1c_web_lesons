@@ -316,6 +316,12 @@ git push -u origin main`,
         title: "Начните с актуальной ветки main",
         text: "Перед каждой новой задачей обновите локальную ветку main. Не начинайте работу со старой версии проекта.",
         content: [
+          {
+            type: "video",
+            id: "YVl8JUqR5JA",
+            title: "Git — как совместно вести разработку одного проекта",
+            label: "Видео: как команда совместно работает в Git",
+          },
           { type: "command", label: "Перейти в папку проекта", code: "cd путь\\к\\проекту" },
           { type: "command", label: "Проверить состояние проекта", code: "git status" },
           { type: "command", label: "Перейти в main", code: "git switch main" },
@@ -1006,9 +1012,26 @@ function renderBlock(block) {
       return renderChecklist(block.items);
     case "links":
       return renderLinks(block.links);
+    case "video":
+      return renderVideo(block);
     default:
       return "";
   }
+}
+
+function renderVideo(block) {
+  return `
+    ${block.label ? `<p class="command-label">${escapeHtml(block.label)}</p>` : ""}
+    <div class="video-embed">
+      <iframe
+        src="https://www.youtube.com/embed/${escapeAttribute(block.id)}"
+        title="${escapeAttribute(block.title || "YouTube video")}"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+  `;
 }
 
 function renderCommand(block) {
