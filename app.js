@@ -348,9 +348,9 @@ git push -u origin main`,
         content: [
           {
             type: "video",
-            id: "wR3gXOiRm10",
-            title: "Git branch — работа с ветками",
-            label: "Видео: работа с ветками Git",
+            id: "SZARWakrCro",
+            title: "Как открыть и правильно закрыть issues",
+            label: "Видео: зачем нужны Issues и как их правильно закрывать",
           },
           { type: "command", label: "Создать ветку задачи", code: "git switch -c feat/product-search" },
           {
@@ -411,9 +411,9 @@ docs/setup-guide`,
         content: [
           {
             type: "video",
-            id: "SZARWakrCro",
-            title: "Как открыть и правильно закрыть issues",
-            label: "Видео: зачем нужны Issues и как их правильно закрывать",
+            id: "wR3gXOiRm10",
+            title: "Git branch — работа с ветками",
+            label: "Видео: работа с ветками Git",
           },
           {
             type: "snippet",
