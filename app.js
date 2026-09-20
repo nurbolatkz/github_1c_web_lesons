@@ -1105,114 +1105,269 @@ git status --short
     id: "lesson-08",
     group: "FastAPI SQL",
     number: "08",
-    title: "FastAPI как адаптер 1С",
-    subtitle: "Создайте Python-мост между React и опубликованным HTTP-сервисом 1С.",
-    minutes: "30 мин",
+    title: "FastAPI: авторизация и сессия 1С",
+    subtitle: "Создайте FastAPI-мост, который авторизует пользователя в 1С и передаёт access token в защищённых запросах.",
+    minutes: "35 мин",
     level: "Средний",
     complete: false,
-    need: ["Python 3.12", "HTTP-сервис 1С из урока 06", "Файл .env", "Git"],
-    goal: "FastAPI будет принимать запросы React, обращаться к 1С, нормализовать ответы и возвращать понятные ошибки.",
+    need: [
+      "Python 3.12",
+      "Опубликованный HTTP-сервис 1С",
+      "Эндпоинт авторизации 1С",
+      "Файл .env",
+      "SQLite или PostgreSQL",
+      "Git",
+    ],
+    goal: "FastAPI будет создавать локальную сессию пользователя, хранить только данные авторизации и передавать access token в 1С при каждом защищённом запросе.",
     steps: [
       {
         title: "Создать виртуальное окружение",
-        text: "Все Python-зависимости хранятся внутри папки bridge и не смешиваются с другими проектами.",
+        text: "Все Python-зависимости проекта должны находиться внутри папки bridge.",
         code: `cd bridge
 python -m venv .venv
 .\\.venv\\Scripts\\Activate.ps1`,
       },
       {
         title: "Установить зависимости",
-        text: "FastAPI отвечает за API, Pydantic Settings — за конфигурацию, а HTTPX — за запросы к HTTP-сервису 1С.",
+        text: "FastAPI отвечает за API, SQLAlchemy — за таблицы авторизации, HTTPX — за запросы к 1С, а cryptography — за безопасное хранение токена.",
         code: `python -m pip install --upgrade pip
-pip install fastapi "uvicorn[standard]" pydantic-settings httpx
+
+pip install fastapi "uvicorn[standard]" pydantic-settings httpx sqlalchemy aiosqlite cryptography
+
 pip freeze > requirements.txt`,
       },
       {
-        title: "Создать настройки приложения",
-        text: "FastAPI читает адрес и технические учётные данные 1С из .env. React и браузер эти значения не получают.",
-        code: `Настройки:
+        title: "Понять границы FastAPI",
+        text: "FastAPI не хранит товары, заявки и другие бизнес-данные. Эти данные остаются в 1С.",
+        code: `React → FastAPI → HTTP-сервис 1С
+
+FastAPI хранит только:
+
+1. auth_users
+   - локальный id
+   - username
+   - идентификатор пользователя в 1С
+   - статус пользователя
+
+2. auth_sessions
+   - хеш локального session token
+   - пользователь
+   - дата создания
+   - срок действия
+   - дата последней активности
+   - revoked_at
+
+3. onec_tokens
+   - пользователь
+   - зашифрованный access token
+   - дата получения
+   - срок действия
+   - статус токена
+
+FastAPI НЕ создаёт таблицы:
+
+- products
+- requests
+- documents
+- warehouses
+- business_records`,
+      },
+      {
+        title: "Настроить переменные окружения",
+        text: "FastAPI получает адрес 1С и параметры сессии из .env. Пароли пользователей не хранятся в .env и базе данных.",
+        code: `.env.example
 
 ONEC_BASE_URL=http://localhost/onec-demo/hs/api
-ONEC_AUTH_MODE=basic
-ONEC_USERNAME=
-ONEC_PASSWORD=
+ONEC_LOGIN_PATH=/login
+ONEC_TOKEN_HEADER=Authorization
 ONEC_TIMEOUT_SECONDS=15
 
-Нельзя принимать URL 1С от браузера.
-URL должен приходить только из серверной конфигурации.`,
+DATABASE_URL=sqlite+aiosqlite:///./data/bridge.db
+
+SESSION_COOKIE_NAME=bridge_session
+SESSION_TTL_SECONDS=28800
+SESSION_IDLE_TIMEOUT_SECONDS=1800
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAMESITE=lax
+
+TOKEN_ENCRYPTION_KEY=change-me-in-local-env
+
+Не добавляйте:
+
+ONEC_USERNAME=
+ONEC_PASSWORD=
+
+Логин и пароль вводит пользователь.
+FastAPI передаёт их в 1С только во время авторизации.`,
       },
       {
-        title: "Создать health-эндпоинт",
-        text: "Health-эндпоинт показывает, что FastAPI запущен. Он не должен раскрывать пароль, токены или внутренние настройки.",
-        code: `GET /health
+        title: "Создать авторизацию через 1С",
+        text: "При входе React передаёт username и password в FastAPI. FastAPI отправляет их в login-эндпоинт 1С.",
+        code: `POST /api/auth/login
 
-Пример ответа:
+Запрос в FastAPI:
 
 {
-  "status": "ok",
-  "service": "fastapi-bridge"
-}`,
+  "username": "student01",
+  "password": "user-password"
+}
+
+FastAPI отправляет в 1С:
+
+POST {{ONEC_BASE_URL}}/login
+
+{
+  "username": "student01",
+  "password": "user-password"
+}
+
+Пример ответа 1С:
+
+{
+  "success": true,
+  "message": "Успешная авторизация",
+  "token": "access-token-from-1c",
+  "expires_in": 3600,
+  "user_id": "123"
+}
+
+Фактические имена полей должны соответствовать контракту HTTP-сервиса 1С.`,
       },
       {
-        title: "Создать клиент 1С",
-        text: "Вынесите HTTP-запросы к 1С в отдельный модуль. Не размещайте вызовы 1С внутри каждого React-маршрута.",
-        code: `FastAPI → OneCClient → HTTP-сервис 1С
+        title: "Создать локальную сессию",
+        text: "После успешной авторизации FastAPI сохраняет пользователя, access token и локальную сессию.",
+        code: `После успешного ответа 1С:
 
-Клиент должен:
-- использовать ONEC_BASE_URL;
-- применять тайм-аут;
-- добавлять техническую авторизацию;
-- обрабатывать ошибки соединения;
-- не записывать пароль в логи.`,
+1. Создать или обновить запись auth_users.
+2. Сохранить access token в onec_tokens.
+3. Сохранить срок действия токена.
+4. Создать случайный session token.
+5. Сохранить только хеш session token.
+6. Передать session token в HttpOnly cookie.
+
+Ответ FastAPI:
+
+{
+  "success": true,
+  "user": {
+    "username": "student01",
+    "onec_user_id": "123"
+  },
+  "session_expires_at": "2026-09-20T23:00:00Z"
+}
+
+Access token 1С не возвращается в React.`,
       },
       {
-        title: "Создать адаптерные маршруты",
-        text: "Добавьте FastAPI-маршруты для товаров и заявок. React должен обращаться только к FastAPI.",
-        code: `FastAPI:
+        title: "Передавать access token в 1С",
+        text: "Каждый защищённый запрос сначала проверяет локальную сессию, затем FastAPI передаёт access token в HTTP-сервис 1С.",
+        code: `Браузер отправляет:
 
-GET    /api/products
-GET    /api/products/{id}
-POST   /api/products
-PATCH  /api/products/{id}
-DELETE /api/products/{id}
+Cookie: bridge_session=<local-session-token>
 
-GET    /api/requests
-GET    /api/requests/{id}
-POST   /api/requests
-PATCH  /api/requests/{id}
-DELETE /api/requests/{id}`,
+FastAPI отправляет в 1С:
+
+Authorization: Bearer <onec-access-token>
+
+1С по access token определяет:
+
+- пользователя;
+- его роли;
+- доступные объекты;
+- разрешённые действия;
+- статус запроса.
+
+React не обращается к 1С напрямую и не хранит access token 1С.`,
       },
       {
-        title: "Нормализовать ошибки",
-        text: "Ошибки 1С не должны возвращаться во frontend в виде внутреннего traceback.",
-        code: `Правила:
+        title: "Обработать истечение токена",
+        text: "Если access token истёк, FastAPI не должен хранить пароль пользователя для автоматического входа.",
+        code: `Сценарий:
 
-Ошибка подключения 1С → 502 Bad Gateway
-Тайм-аут 1С → 504 Gateway Timeout
-Объект не найден → 404 Not Found
-Неверные данные → 400 Bad Request
+1. FastAPI проверяет срок действия токена.
+2. Если токен истёк — запрос в 1С не выполняется.
+3. Если 1С вернула 401 — токен помечается истёкшим.
+4. FastAPI возвращает frontend:
 
-Формат ошибки:
+HTTP 401
 
 {
   "error": {
-    "code": "onec_unavailable",
-    "message": "Сервис 1С временно недоступен",
-    "request_id": "..."
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
   }
-}`,
+}
+
+5. React показывает форму входа.
+6. Пользователь снова вводит только username и password.
+7. FastAPI повторяет авторизацию через 1С и создаёт новый токен.
+
+Пароль пользователя не сохраняется в SQL, логах, cookie или response.`,
       },
       {
-        title: "Запустить и проверить мост",
-        text: "Проверьте FastAPI отдельно от React через Swagger и HTTP-запрос.",
-        code: `python -m uvicorn app.main:app --reload
+        title: "Создать служебные маршруты",
+        text: "На этом уроке создаются только маршруты авторизации, сессии и проверки защищённого запроса.",
+        code: `GET    /health
+POST   /api/auth/login
+POST   /api/auth/logout
+GET    /api/auth/me
+GET    /api/onec/ping
+
+/api/onec/ping — защищённый тестовый запрос.
+Он отправляется в 1С с access token текущего пользователя.
+
+Маршруты products и requests будут добавлены в следующем уроке.
+Они также не будут иметь собственных таблиц в FastAPI.`,
+      },
+      {
+        title: "Проверить ошибки и безопасность",
+        text: "Скрывайте внутренние ошибки FastAPI и 1С от браузера.",
+        code: `Ошибки:
+
+401 Unauthorized
+- неверный логин или пароль;
+- отсутствует локальная сессия;
+- истёк access token.
+
+403 Forbidden
+- пользователь авторизован, но у него нет права.
+
+502 Bad Gateway
+- 1С недоступна.
+
+504 Gateway Timeout
+- 1С не ответила вовремя.
+
+Важно:
+
+- не показывать access token в response;
+- не записывать пароль и токен в логи;
+- использовать HttpOnly cookie;
+- хранить session token только в виде хеша;
+- хранить access token зашифрованным;
+- включить HTTPS в production;
+- использовать SESSION_COOKIE_SECURE=true на сервере.`,
+      },
+      {
+        title: "Запустить и проверить FastAPI",
+        text: "Проверьте локальную авторизацию через Swagger или Postman.",
+        code: `python -m compileall app
+
+python -m uvicorn app.main:app --reload
 
 Проверки:
 
 http://127.0.0.1:8000/docs
 http://127.0.0.1:8000/health
 
-Invoke-RestMethod http://127.0.0.1:8000/health`,
+Порядок проверки:
+
+1. POST /api/auth/login
+2. GET /api/auth/me
+3. GET /api/onec/ping
+4. POST /api/auth/logout
+5. Повторить GET /api/auth/me
+6. Проверить ответ 401 после logout`,
       },
       {
         title: "Prompt для Codex или Claude Code",
@@ -1227,99 +1382,342 @@ Invoke-RestMethod http://127.0.0.1:8000/health`,
             body: `Ты работаешь в текущей папке bridge.
 
 Сначала изучи существующие файлы и структуру проекта.
-Не изменяй frontend, 1С-конфигурацию и файлы за пределами текущей папки.
+Не изменяй frontend, конфигурацию 1С и файлы за пределами текущей папки.
 
-Создай минимальный FastAPI-адаптер между React и HTTP-сервисом 1С.
+Предыдущая версия урока ошибочно добавляла CRUD для products и requests.
+В этой задаче FastAPI должен быть только authentication/session bridge к 1С.
 
-Требования:
+Главное правило:
 
-1. Используй:
-   - FastAPI
-   - Uvicorn
-   - pydantic-settings
-   - httpx
+React → FastAPI → HTTP-сервис 1С
 
-2. Создай понятную структуру:
+FastAPI не хранит бизнес-таблицы и не обращается к 1С напрямую из React.
 
-   app/
-   ├── main.py
-   ├── core/
-   │   └── settings.py
-   ├── clients/
-   │   └── onec_client.py
-   ├── routers/
-   │   ├── health.py
-   │   ├── products.py
-   │   └── requests.py
-   └── schemas/
+Создай минимальный рабочий FastAPI-проект со следующими возможностями:
 
-3. Загружай настройки из .env:
+1. Установи зависимости:
 
-   ONEC_BASE_URL
-   ONEC_AUTH_MODE
-   ONEC_USERNAME
-   ONEC_PASSWORD
-   ONEC_TIMEOUT_SECONDS
+- fastapi
+- uvicorn
+- pydantic-settings
+- httpx
+- sqlalchemy
+- aiosqlite
+- cryptography
 
-4. Создай GET /health.
-   Ответ:
+2. Создай структуру:
 
-   {
-     "status": "ok",
-     "service": "fastapi-bridge"
-   }
+app/
+├── main.py
+├── db.py
+├── core/
+│   ├── settings.py
+│   └── security.py
+├── models/
+│   ├── auth_user.py
+│   ├── auth_session.py
+│   └── onec_token.py
+├── clients/
+│   ├── onec_auth_client.py
+│   └── onec_client.py
+├── services/
+│   └── auth_service.py
+├── routers/
+│   ├── health.py
+│   ├── auth.py
+│   └── onec_proxy.py
+└── schemas/
+    ├── auth.py
+    └── common.py
 
-5. Создай клиент OneCClient:
-   - используй ONEC_BASE_URL;
-   - убирай лишний символ / в URL;
-   - используй timeout;
-   - добавляй Basic Auth только на сервере;
-   - не передавай пароль в response и логи;
-   - не принимай произвольный URL от браузера.
+3. Настройки должны загружаться из .env:
 
-6. Создай адаптерные маршруты:
+ONEC_BASE_URL
+ONEC_LOGIN_PATH
+ONEC_TOKEN_HEADER
+ONEC_TIMEOUT_SECONDS
 
-   /api/products
-   /api/products/{id}
-   /api/requests
-   /api/requests/{id}
+DATABASE_URL
 
-   Поддержи GET, POST, PATCH и DELETE согласно HTTP-сервису 1С.
+SESSION_COOKIE_NAME
+SESSION_TTL_SECONDS
+SESSION_IDLE_TIMEOUT_SECONDS
+SESSION_COOKIE_SECURE
+SESSION_COOKIE_SAMESITE
 
-7. DELETE должен выполнять пометку удаления в 1С, а не физическое удаление.
+TOKEN_ENCRYPTION_KEY
 
-8. Нормализуй ошибки:
-   - ошибка соединения 1С → 502;
-   - timeout → 504;
-   - объект не найден → 404;
-   - ошибка данных → 400.
+Не добавляй ONEC_USERNAME и ONEC_PASSWORD.
+Пароль вводит пользователь во время login и не сохраняется.
 
-9. Не добавляй:
-   - SQL;
-   - пользовательские сессии;
-   - OAuth;
-   - Docker;
-   - прямые вызовы 1С из React.
+4. Создай только таблицы авторизации:
 
-10. Добавь .env.example без секретов.
+auth_users:
 
-11. Проверь проект командами:
+- id
+- username
+- onec_user_id
+- is_active
+- created_at
+- updated_at
 
-   python -m compileall app
-   python -m uvicorn app.main:app --reload
+auth_sessions:
+
+- id
+- user_id
+- session_token_hash
+- created_at
+- last_seen_at
+- expires_at
+- revoked_at
+
+onec_tokens:
+
+- id
+- user_id
+- encrypted_access_token
+- issued_at
+- expires_at
+- revoked_at
+
+Не создавай таблицы:
+
+- products
+- requests
+- documents
+- warehouses
+- orders
+- business records
+
+Не создавай SQL-модели для данных 1С.
+
+5. Создай POST /api/auth/login.
+
+Request:
+
+{
+  "username": "student01",
+  "password": "password"
+}
+
+FastAPI должен:
+
+- принять username и password;
+- отправить их в 1С через ONEC_LOGIN_PATH;
+- не записывать пароль в базу;
+- не записывать пароль в логи;
+- проверить success в ответе 1С;
+- получить token;
+- получить expires_in, если поле существует;
+- сохранить access token зашифрованным;
+- создать или обновить auth_users;
+- создать auth_sessions;
+- установить HttpOnly cookie;
+- не возвращать access token в response.
+
+Ожидаемый контракт 1С по умолчанию:
+
+{
+  "success": true,
+  "message": "Успешная авторизация",
+  "token": "token-from-1c",
+  "expires_in": 3600,
+  "user_id": "123"
+}
+
+Не выдумывай другие поля.
+Если фактический контракт 1С отличается, вынеси различие в отдельный адаптер и добавь TODO.
+
+6. Создай маршруты:
+
+GET  /health
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+GET  /api/onec/ping
+
+GET /api/onec/ping должен быть защищён локальной сессией.
+
+7. Реализуй проверку локальной сессии:
+
+- прочитать session token из HttpOnly cookie;
+- вычислить его хеш;
+- найти auth_sessions;
+- проверить revoked_at;
+- проверить expires_at;
+- проверить idle timeout;
+- найти пользователя;
+- найти активный onec_tokens;
+- расшифровать access token только на сервере.
+
+8. Реализуй запрос к 1С:
+
+Для каждого защищённого запроса добавляй access token:
+
+Authorization: Bearer <access-token>
+
+Если ONEC_TOKEN_HEADER отличается от Authorization, используй значение из настроек.
+
+Не передавай access token в React.
+Не принимай URL 1С от браузера.
+URL 1С должен приходить только из .env.
+
+9. Обработай истечение access token:
+
+Если локальный срок токена истёк или 1С вернула 401:
+
+- пометь onec_tokens.revoked_at;
+- не пытайся входить в 1С с сохранённым паролем;
+- не делай бесконечные повторы;
+- верни HTTP 401;
+- верни код ошибки reauth_required;
+- frontend должен повторно вызвать POST /api/auth/login.
+
+Формат:
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+10. Реализуй logout:
+
+- установить revoked_at для локальной сессии;
+- удалить или очистить cookie;
+- не удалять пользователя из auth_users;
+- не удалять бизнес-данные в 1С.
+
+11. Реализуй GET /api/auth/me.
+
+Пример ответа:
+
+{
+  "authenticated": true,
+  "user": {
+    "username": "student01",
+    "onec_user_id": "123"
+  },
+  "session_expires_at": "2026-09-20T23:00:00Z"
+}
+
+Не возвращай:
+
+- password;
+- access token;
+- encrypted_access_token;
+- внутренние секреты;
+- полный traceback.
+
+12. Реализуй GET /api/onec/ping.
+
+Этот маршрут должен:
+
+- проверить локальную сессию;
+- получить access token текущего пользователя;
+- отправить запрос в заранее заданный путь 1С;
+- передать access token;
+- вернуть безопасный JSON-ответ;
+- не возвращать токен.
+
+Не создавай универсальный прокси с произвольным URL.
+Не принимай путь 1С от клиента без allowlist.
+
+13. Нормализуй ошибки:
+
+401:
+- неверный логин;
+- отсутствует сессия;
+- сессия завершена;
+- access token истёк.
+
+403:
+- пользователь не имеет права.
+
+502:
+- 1С недоступна.
+
+504:
+- истёк timeout запроса к 1С.
+
+500:
+- внутренняя ошибка FastAPI.
+
+Ошибки должны иметь вид:
+
+{
+  "error": {
+    "code": "onec_unavailable",
+    "message": "Сервис 1С временно недоступен",
+    "request_id": "..."
+  }
+}
+
+14. Безопасность:
+
+- session token создавать через secrets.token_urlsafe;
+- в базе хранить только хеш session token;
+- access token хранить зашифрованным;
+- не хранить пароль пользователя;
+- не писать пароль и access token в логи;
+- не возвращать access token в React;
+- использовать HttpOnly cookie;
+- использовать Secure cookie в production;
+- добавить безопасный SameSite;
+- не добавлять OAuth;
+- не добавлять SSO;
+- не добавлять Basic Auth с техническим пользователем;
+- не добавлять Docker;
+- не добавлять бизнес-таблицы.
+
+15. Добавь .env.example без секретов:
+
+ONEC_BASE_URL=http://localhost/onec-demo/hs/api
+ONEC_LOGIN_PATH=/login
+ONEC_TOKEN_HEADER=Authorization
+ONEC_TIMEOUT_SECONDS=15
+
+DATABASE_URL=sqlite+aiosqlite:///./data/bridge.db
+
+SESSION_COOKIE_NAME=bridge_session
+SESSION_TTL_SECONDS=28800
+SESSION_IDLE_TIMEOUT_SECONDS=1800
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAMESITE=lax
+
+TOKEN_ENCRYPTION_KEY=replace-in-local-env
+
+16. Проверь проект:
+
+python -m compileall app
+
+python -m uvicorn app.main:app --reload
+
+Проверь:
+
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/health
+
+Не используй реальные пароли и токены при демонстрации результата.
+
+Если в проекте уже существуют products.py, requests.py или бизнес-модели от старой версии, не удаляй их молча. Не подключай их к main.py, опиши их в итоговом отчёте как устаревшие или неиспользуемые.
 
 После работы верни:
-- список созданных файлов;
-- краткое описание маршрутов;
-- команды проверки;
-- найденные ограничения;
-- что нужно сделать в следующем уроке.
 
-Не показывай значения паролей и токенов.`,
+1. список созданных и изменённых файлов;
+2. структуру таблиц авторизации;
+3. описание login/session/token flow;
+4. список маршрутов;
+5. команды проверки;
+6. найденные ограничения;
+7. что нужно сделать в следующем уроке.
+
+Не показывай значения паролей, токенов и ключей.`,
           },
           {
             type: "note",
-            text: "Результат урока: FastAPI запускается, отвечает на /health и предоставляет контролируемые маршруты для работы с HTTP-сервисом 1С.",
+            text: "Результат урока: FastAPI авторизует пользователя через 1С, создаёт локальную сессию и передаёт access token в 1С. Товары, заявки и другие бизнес-данные остаются только в 1С.",
           },
         ],
       },
