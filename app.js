@@ -3112,24 +3112,383 @@ python -m uvicorn app.main:app --reload
     minutes: "20 мин",
     level: "Средний",
     complete: false,
-    need: ["FastAPI app", "SQL sessions", "DB Browser for SQLite"],
-    goal: "вы сможете наблюдать истечение сессии и отзыв доступа после logout в DB Browser.",
+    need: ["Рабочий login из урока 10", "Таблицы users и sessions", "SQLite", "DB Browser for SQLite"],
+    goal: "наблюдать истечение сессии, idle timeout и отзыв доступа после logout в DB Browser.",
     steps: [
       {
-        title: "Настройте политику сессии",
-        text: "Используйте абсолютный максимум и таймаут бездействия, чтобы можно было наблюдать истечение и отзыв в DB Browser.",
-        code: `SESSION_ABSOLUTE_TTL_SECONDS=28800
+        title: "Настроить политику сессии",
+        text: "Используйте абсолютный срок действия и таймаут бездействия.",
+        code: `.env
+
+SESSION_ABSOLUTE_TTL_SECONDS=28800
 SESSION_IDLE_TTL_SECONDS=1800
-COOKIE_SECURE=true`,
+SESSION_COOKIE_NAME=bridge_session
+SESSION_COOKIE_SAMESITE=lax
+SESSION_COOKIE_SECURE=false
+
+Локальная разработка работает по HTTP,
+поэтому SESSION_COOKIE_SECURE=false.
+
+В production обязательно:
+
+SESSION_COOKIE_SECURE=true
+
+и HTTPS.`,
       },
       {
-        title: "Добавьте меры безопасности",
-        text: "Используйте HTTPS, ограничение попыток входа, хеширование Argon2id, CSRF-защиту для изменяющих запросов и безопасные сообщения об ошибках.",
-        info: [
-          "JavaScript не читает секретный токен.",
-          "Logout выставляет revoked_at и очищает cookie.",
-          "Блокировка пользователя и смена пароля отзывают текущие сессии.",
-          "OAuth2 и access/refresh JWT не обязательны для первого приложения.",
+        title: "Проверять абсолютный TTL",
+        text: "Абсолютный TTL ограничивает максимальное время жизни сессии, даже если пользователь постоянно активен.",
+        code: `При создании сессии:
+
+created_at = текущее время
+
+expires_at =
+created_at + SESSION_ABSOLUTE_TTL_SECONDS
+
+Если текущее время больше expires_at:
+
+- сессия считается истёкшей;
+- FastAPI возвращает HTTP 401;
+- cookie очищается;
+- пользователь должен войти повторно.
+
+Ответ:
+
+{
+  "error": {
+    "code": "session_expired",
+    "message": "Сессия завершена"
+  }
+}`,
+      },
+      {
+        title: "Добавить idle timeout",
+        text: "Idle timeout завершает сессию, если пользователь долго не выполнял запросы.",
+        code: `При каждом защищённом запросе:
+
+1. Прочитать last_activity_at.
+2. Сравнить его с текущим временем.
+3. Если прошло больше 1800 секунд:
+   - установить revoked_at;
+   - очистить cookie;
+   - вернуть HTTP 401.
+4. Если сессия активна:
+   - обновить last_activity_at.
+
+Ответ:
+
+{
+  "error": {
+    "code": "session_idle_timeout",
+    "message": "Сессия завершена из-за бездействия"
+  }
+}`,
+      },
+      {
+        title: "Реализовать безопасный logout",
+        text: "Logout должен отозвать сессию в SQL и удалить cookie браузера.",
+        code: `POST /api/auth/logout
+
+FastAPI:
+
+1. Находит текущую запись sessions.
+2. Устанавливает revoked_at.
+3. Очищает bridge_session cookie.
+4. Не удаляет пользователя из users.
+5. Не удаляет данные в 1С.
+
+После logout:
+
+GET /api/auth/me
+
+возвращает HTTP 401.`,
+      },
+      {
+        title: "Обработать истечение access token 1С",
+        text: "Если 1С возвращает 401, локальная сессия больше не должна считаться полностью авторизованной.",
+        code: `Если onec_token_expires_at истёк
+или 1С вернула HTTP 401:
+
+- не повторять запрос бесконечно;
+- пометить текущую сессию отозванной;
+- очистить cookie;
+- вернуть код reauth_required;
+- попросить пользователя снова выполнить login через 1С.
+
+Ответ:
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+Пароль пользователя не сохраняется.
+FastAPI не выполняет автоматический login.`,
+      },
+      {
+        title: "Обработать блокировку пользователя",
+        text: "Если пользователь заблокирован в 1С или его токен стал недействительным, доступ должен быть отозван.",
+        code: `Сценарий:
+
+1. Пользователь авторизован.
+2. В 1С пользователь блокируется
+   или его доступ отзывается.
+3. Следующий запрос FastAPI получает 401 от 1С.
+4. FastAPI устанавливает revoked_at.
+5. Cookie очищается.
+6. Пользователь получает сообщение
+   о необходимости обратиться к администратору
+   или повторно войти.
+
+FastAPI не хранит локальную роль.
+Права и блокировка определяются в 1С.`,
+      },
+      {
+        title: "Проверить TTL в DB Browser",
+        text: "Для учебной проверки можно вручную изменить даты в SQLite и наблюдать результат запроса.",
+        code: `Проверить активные сессии:
+
+SELECT
+  id,
+  user_id,
+  created_at,
+  last_activity_at,
+  expires_at,
+  onec_token_expires_at,
+  revoked_at
+FROM sessions;
+
+Сымитировать idle timeout:
+
+UPDATE sessions
+SET last_activity_at = datetime('now', '-31 minutes')
+WHERE revoked_at IS NULL;
+
+После этого выполнить:
+
+GET /api/auth/me
+
+Ожидаемый результат:
+
+HTTP 401
+code: session_idle_timeout
+
+Сымитировать истечение TTL:
+
+UPDATE sessions
+SET expires_at = datetime('now', '-1 second')
+WHERE revoked_at IS NULL;
+
+После запроса проверьте revoked_at.`,
+      },
+      {
+        title: "Добавить меры безопасности",
+        text: "Защищённая cookie-сессия должна работать только вместе с HTTPS и безопасными правилами обработки ошибок.",
+        code: `Обязательные правила:
+
+- использовать HTTPS в production;
+- использовать HttpOnly cookie;
+- использовать Secure cookie в production;
+- использовать SameSite=Lax;
+- не хранить пароль;
+- не использовать localStorage для session token;
+- не показывать token в response;
+- не записывать token и пароль в логи;
+- ограничить попытки login;
+- добавить CSRF-защиту для POST, PATCH и DELETE;
+- возвращать безопасные сообщения об ошибках;
+- отзывать сессии после logout.
+
+Argon2id в FastAPI не требуется,
+потому что локальный пароль не хранится.
+Пароль проверяется HTTP-сервисом 1С.`,
+      },
+      {
+        title: "Prompt для Codex или Claude Code",
+        text: "Запускайте AI-агента внутри папки bridge, где находится Python-проект.",
+        content: [
+          { type: "command", label: "Перейти в папку bridge", code: "cd bridge" },
+          { type: "command", label: "Запустить Codex", code: "codex" },
+          { type: "command", label: "Или запустить Claude Code", code: "claude" },
+          {
+            type: "snippet",
+            label: "Prompt для TTL, idle timeout и logout",
+            body: `Ты работаешь в текущей папке bridge.
+
+Изучи существующие таблицы users и sessions.
+Не изменяй frontend, конфигурацию 1С и файлы за пределами текущей папки.
+
+Реализуй срок действия сессии, idle timeout и logout.
+
+Архитектура:
+
+React → FastAPI → HTTP-сервис 1С
+
+Правила:
+
+- пароль проверяется в 1С;
+- FastAPI не хранит password или password_hash;
+- роли принадлежат 1С;
+- FastAPI использует только таблицы users и sessions;
+- session token хранится в браузере только в HttpOnly cookie;
+- в SQL хранится только хеш session token;
+- access token 1С хранится зашифрованным в sessions.
+
+Настройки:
+
+SESSION_ABSOLUTE_TTL_SECONDS=28800
+SESSION_IDLE_TTL_SECONDS=1800
+SESSION_COOKIE_NAME=bridge_session
+SESSION_COOKIE_SAMESITE=lax
+SESSION_COOKIE_SECURE=false
+
+В production SESSION_COOKIE_SECURE должен быть true
+при использовании HTTPS.
+
+Реализуй абсолютный TTL:
+
+- использовать expires_at;
+- сравнивать expires_at с текущим временем;
+- после истечения возвращать HTTP 401;
+- очищать cookie;
+- не выполнять защищённый запрос в 1С.
+
+Ошибка:
+
+{
+  "error": {
+    "code": "session_expired",
+    "message": "Сессия завершена"
+  }
+}
+
+Реализуй idle timeout:
+
+- использовать last_activity_at;
+- если прошло более SESSION_IDLE_TTL_SECONDS, отозвать сессию;
+- заполнить revoked_at;
+- очистить cookie;
+- вернуть HTTP 401.
+
+Ошибка:
+
+{
+  "error": {
+    "code": "session_idle_timeout",
+    "message": "Сессия завершена из-за бездействия"
+  }
+}
+
+При каждом активном защищённом запросе обновляй last_activity_at.
+
+Реализуй logout:
+
+POST /api/auth/logout
+
+Действия:
+
+1. Найти текущую сессию.
+2. Установить revoked_at.
+3. Очистить bridge_session cookie.
+4. Вернуть безопасный JSON.
+5. Не удалять пользователя из users.
+6. Не удалять бизнес-данные в 1С.
+
+Реализуй обработку 401 от 1С:
+
+Если onec access token истёк
+или HTTP-сервис 1С вернул 401:
+
+- не делать бесконечные retry;
+- установить revoked_at;
+- очистить cookie;
+- вернуть HTTP 401;
+- использовать code reauth_required;
+- потребовать повторный login через 1С.
+
+Ошибка:
+
+{
+  "error": {
+    "code": "reauth_required",
+    "message": "Требуется повторная авторизация"
+  }
+}
+
+Не сохраняй пароль пользователя и не выполняй автоматический login.
+
+Проверь вручную в DB Browser:
+
+SELECT
+  id,
+  user_id,
+  created_at,
+  last_activity_at,
+  expires_at,
+  onec_token_expires_at,
+  revoked_at
+FROM sessions;
+
+Для проверки idle timeout можно временно выполнить:
+
+UPDATE sessions
+SET last_activity_at = datetime('now', '-31 minutes')
+WHERE revoked_at IS NULL;
+
+Для проверки абсолютного TTL:
+
+UPDATE sessions
+SET expires_at = datetime('now', '-1 second')
+WHERE revoked_at IS NULL;
+
+После каждого изменения вызови:
+
+GET /api/auth/me
+
+Проверь HTTP 401 и соответствующий error.code.
+
+Проверь logout:
+
+1. Выполнить POST /api/auth/logout.
+2. Открыть sessions в DB Browser.
+3. Проверить заполненное revoked_at.
+4. Выполнить GET /api/auth/me.
+5. Убедиться, что возвращается HTTP 401.
+
+Безопасность:
+
+- не использовать localStorage;
+- не возвращать token в React;
+- не выводить token в логах;
+- использовать HttpOnly;
+- использовать Secure в production;
+- использовать SameSite=Lax;
+- добавить rate limit login;
+- добавить CSRF-защиту для изменяющих запросов;
+- не добавлять Argon2id для локального пароля, потому что пароль хранится и проверяется в 1С.
+
+Проверь:
+
+python -m compileall app
+python -m uvicorn app.main:app --reload
+
+После работы верни:
+
+- изменённые файлы;
+- описание TTL;
+- описание idle timeout;
+- описание logout;
+- результаты проверки через DB Browser;
+- найденные ограничения.
+
+Не показывай пароли, session token, access token и ключи шифрования.`,
+          },
+          {
+            type: "note",
+            text: "Результат урока: пользовательская сессия завершается по абсолютному TTL, idle timeout, logout или недействительности access token 1С. Все изменения можно проверить в DB Browser через поля expires_at, last_activity_at и revoked_at.",
+          },
         ],
       },
     ],
