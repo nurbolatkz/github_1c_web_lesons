@@ -569,6 +569,7 @@ code {
 
 .doc-link {
   min-height: 46px;
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -579,6 +580,21 @@ code {
   color: var(--accent-strong);
   background: var(--accent-soft);
   font-weight: 800;
+}
+
+.doc-link span {
+  overflow-wrap: anywhere;
+}
+
+.doc-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 18px;
+}
+
+.doc-link-row .doc-link {
+  margin: 0;
 }
 
 .doc-link:hover,

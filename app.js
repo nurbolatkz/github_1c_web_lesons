@@ -143,29 +143,70 @@ Python bridge backend
   {
     id: "lesson-01",
     group: "Getting started",
+    groupLabel: "Начало",
     number: "01",
-    title: "Accounts & registration",
-    subtitle: "Prepare the accounts needed for GitHub, AI coding tools, and project hosting.",
-    minutes: "10 min",
-    level: "Beginner",
+    title: "Аккаунты и подписки",
+    subtitle: "Подготовьте GitHub и аккаунт выбранного AI-инструмента перед установкой CLI.",
+    minutes: "10 мин",
+    level: "Начальный",
     complete: true,
-    need: ["GitHub account", "OpenAI account", "Anthropic account"],
-    goal: "you will have the accounts required for repository work and AI-assisted coding.",
+    need: ["Аккаунт GitHub", "Аккаунт ChatGPT или Claude", "Выбранный маршрут: Codex CLI или Claude Code"],
+    goal: "ученик создал GitHub-аккаунт и подготовил аккаунт выбранного AI-инструмента для дальнейшей установки CLI.",
+    ui: {
+      lang: "ru",
+      courseTitle: "Уроки курса",
+      progress: (completed, total) => `${completed} из ${total} завершено`,
+      breadcrumbLesson: "Урок",
+      byTheEnd: "Результат урока:",
+      tocTitle: "На этой странице",
+      needsTitle: "Понадобится",
+      previous: "Предыдущий урок",
+      next: "Следующий урок",
+      markComplete: "Отметить завершённым",
+      markedComplete: "Завершено",
+    },
     steps: [
       {
-        title: "Create or verify GitHub account",
-        text: "GitHub stores the source code, pull requests, and GitHub Pages lesson site.",
-        code: "https://github.com",
+        title: "Создайте аккаунт GitHub",
+        text: "GitHub будет хранить код проекта, задачи, ветки и Pull Request. Зарегистрируйтесь или войдите в существующий аккаунт.",
+        links: [
+          {
+            label: "Открыть GitHub",
+            href: "https://github.com/",
+          },
+        ],
       },
       {
-        title: "Prepare OpenAI access",
-        text: "Codex CLI uses your OpenAI or ChatGPT sign-in to work from the terminal.",
-        code: "codex --login",
+        title: "Подготовьте ChatGPT для работы с Codex CLI",
+        text: "Зарегистрируйтесь или войдите в ChatGPT. Для подписочного маршрута курса можно использовать ChatGPT Plus или Pro. После установки Codex CLI нужно войти тем же аккаунтом ChatGPT.",
+        links: [
+          {
+            label: "Открыть ChatGPT",
+            href: "https://chatgpt.com/",
+          },
+          {
+            label: "Условия подписок и лимиты",
+            href: "https://learn.chatgpt.com/docs/pricing",
+          },
+        ],
       },
       {
-        title: "Prepare Anthropic access",
-        text: "Claude Code uses your Anthropic account or organization login.",
-        code: "claude",
+        title: "Подготовьте Claude для работы с Claude Code",
+        text: "Зарегистрируйтесь или войдите в Claude. Индивидуальные подписки Pro и Max поддерживают Claude Code. После установки CLI используется тот же аккаунт Claude.",
+        links: [
+          {
+            label: "Открыть Claude",
+            href: "https://claude.ai/",
+          },
+          {
+            label: "Официальная инструкция",
+            href: "https://code.claude.com/docs/en/authentication",
+          },
+        ],
+      },
+      {
+        title: "Выберите один AI-инструмент",
+        text: "Для прохождения курса достаточно выбрать один инструмент: Codex CLI или Claude Code. Покупать обе подписки не требуется. Подписка имеет лимиты использования; доступ через API оплачивается отдельно.",
       },
     ],
   },
@@ -556,8 +597,10 @@ const nav = document.querySelector("#lesson-nav");
 const article = document.querySelector("#lesson-article");
 const tocNav = document.querySelector("#toc-nav");
 const needList = document.querySelector("#need-list");
-const completedCount = document.querySelector("#completed-count");
-const totalCount = document.querySelector("#total-count");
+const courseTitle = document.querySelector("#course-title");
+const progressLabel = document.querySelector("#progress-label");
+const tocTitle = document.querySelector("#toc-title");
+const needsTitle = document.querySelector("#needs-title");
 const progressFill = document.querySelector("#progress-fill");
 const themeToggle = document.querySelector("#theme-toggle");
 
@@ -590,6 +633,7 @@ function groupedLessons() {
 }
 
 function renderNav() {
+  const activeLesson = currentLesson();
   const progress = getCompleted();
   const groups = groupedLessons();
   nav.innerHTML = "";
@@ -602,7 +646,7 @@ function renderNav() {
   Object.entries(groups).forEach(([group, groupLessons]) => {
     const section = document.createElement("section");
     section.className = "nav-group";
-    section.innerHTML = `<h2 class="nav-group-title">${group}</h2>`;
+    section.innerHTML = `<h2 class="nav-group-title">${activeLesson.group === group ? activeLesson.groupLabel || group : group}</h2>`;
 
     groupLessons.forEach((lesson) => {
       const button = document.createElement("button");
@@ -628,10 +672,13 @@ function renderNav() {
 }
 
 function renderProgress() {
+  const lesson = currentLesson();
   const progress = getCompleted();
   const completed = lessons.filter((lesson) => progress[lesson.id]).length;
-  completedCount.textContent = completed;
-  totalCount.textContent = lessons.length;
+  courseTitle.textContent = lesson.ui?.courseTitle || "Course lessons";
+  progressLabel.textContent = lesson.ui?.progress
+    ? lesson.ui.progress(completed, lessons.length)
+    : `${completed} of ${lessons.length} completed`;
   progressFill.style.width = `${(completed / lessons.length) * 100}%`;
 }
 
@@ -641,15 +688,16 @@ function renderArticle() {
   const previous = lessons[lessonIndex - 1];
   const next = lessons[lessonIndex + 1];
   const progress = getCompleted();
+  const ui = lesson.ui || {};
   const sectionLinks = lesson.steps
     .map((step, index) => `<a href="#${lesson.id}-step-${index + 1}">${step.title}</a>`)
     .join("");
 
   article.innerHTML = `
     <div class="breadcrumb">
-      <span>${lesson.group}</span>
+      <span>${lesson.groupLabel || lesson.group}</span>
       <span>/</span>
-      <span>Lesson ${lesson.number}</span>
+      <span>${ui.breadcrumbLesson || "Lesson"} ${lesson.number}</span>
     </div>
 
     <div class="meta-row">
@@ -662,7 +710,7 @@ function renderArticle() {
 
     <div class="goal-banner">
       <div class="goal-icon">${icons.target}</div>
-      <p><strong>By the end:</strong> ${lesson.goal}</p>
+      <p><strong>${ui.byTheEnd || "By the end:"}</strong> ${lesson.goal}</p>
     </div>
 
     <section class="step-list">
@@ -672,20 +720,22 @@ function renderArticle() {
     <footer class="lesson-footer">
       ${
         previous
-          ? `<button class="plain-link" type="button" data-lesson="${previous.id}">${icons.arrowLeft} Previous lesson</button>`
+          ? `<button class="plain-link" type="button" data-lesson="${previous.id}">${icons.arrowLeft} ${ui.previous || "Previous lesson"}</button>`
           : `<span></span>`
       }
       <button class="primary-action" id="complete-button" type="button">
-        ${progress[lesson.id] ? "Marked complete" : "Mark complete"} ${icons.arrowRight}
+        ${progress[lesson.id] ? ui.markedComplete || "Marked complete" : ui.markComplete || "Mark complete"} ${icons.arrowRight}
       </button>
       ${
         next
-          ? `<button class="plain-link" type="button" data-lesson="${next.id}">Next lesson ${icons.arrowRight}</button>`
+          ? `<button class="plain-link" type="button" data-lesson="${next.id}">${ui.next || "Next lesson"} ${icons.arrowRight}</button>`
           : ""
       }
     </footer>
   `;
 
+  tocTitle.textContent = ui.tocTitle || "On this page";
+  needsTitle.textContent = ui.needsTitle || "You will need";
   tocNav.innerHTML = sectionLinks;
   needList.innerHTML = lesson.need.map((item) => `<li>${icons.check}<span>${item}</span></li>`).join("");
 
@@ -727,6 +777,7 @@ function renderStep(lesson) {
           ${step.ai ? renderAi(step.ai) : ""}
           ${step.info ? renderInfo(step.info) : ""}
           ${step.link ? renderLink(step.link) : ""}
+          ${step.links ? renderLinks(step.links) : ""}
         </div>
       </section>
     `;
@@ -769,10 +820,18 @@ function renderInfo(items) {
 
 function renderLink(link) {
   return `
-    <a class="doc-link" href="${escapeAttribute(link.href)}">
+    <a class="doc-link" href="${escapeAttribute(link.href)}" target="_blank" rel="noopener noreferrer">
       <span>${escapeHtml(link.label)}</span>
       ${icons.arrowRight}
     </a>
+  `;
+}
+
+function renderLinks(links) {
+  return `
+    <div class="doc-link-row">
+      ${links.map(renderLink).join("")}
+    </div>
   `;
 }
 
@@ -785,6 +844,7 @@ function selectLesson(lessonId) {
 }
 
 function render() {
+  document.documentElement.lang = currentLesson().ui?.lang || "en";
   renderProgress();
   renderNav();
   renderArticle();
