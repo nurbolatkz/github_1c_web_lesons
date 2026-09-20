@@ -26,7 +26,6 @@ const lessons = [
           "FastAPI хранит пользователей и серверные сессии в собственной SQL-базе.",
           "React + TypeScript работает через /api на одном домене.",
           "Production: Linux, nginx, systemd и HTTPS.",
-          "Docker, SSO, Keycloak и сложные scopes не входят в базовый курс.",
         ],
       },
       {
@@ -175,33 +174,90 @@ React
     group: "Getting started",
     number: "02",
     title: "Инструменты и терминал",
-    subtitle: "Install Git, GitHub CLI, Node.js, Python, Codex CLI, and Claude Code.",
+    subtitle: "Установите инструменты для React, Python, GitHub и AI-assisted разработки.",
     minutes: "20 мин",
     level: "Начальный",
     complete: true,
-    need: ["PowerShell", "Internet connection", "Administrator install permission"],
-    goal: "your machine will be ready for React, Python, GitHub, Codex, and Claude workflows.",
+    need: ["PowerShell", "Подключение к интернету", "Права администратора для установки"],
+    goal: "компьютер готов к работе с React, Python, GitHub, Codex CLI и Claude Code.",
     steps: [
       {
-        title: "Install Git and GitHub CLI",
-        text: "Git manages local history. GitHub CLI creates repositories, opens pull requests, and authenticates from the terminal.",
-        code: `winget install --id Git.Git --source winget
-winget install --id GitHub.cli --source winget
-gh auth login`,
+        title: "Установите Git и GitHub CLI",
+        text: "Git хранит историю изменений проекта. GitHub CLI позволяет работать с репозиториями, Pull Request и авторизацией прямо из PowerShell.",
+        content: [
+          { type: "command", label: "Установить Git", code: "winget install --id Git.Git --source winget" },
+          { type: "command", label: "Установить GitHub CLI", code: "winget install --id GitHub.cli --source winget" },
+          { type: "command", label: "Проверить Git", code: "git --version" },
+          { type: "command", label: "Проверить GitHub CLI", code: "gh --version" },
+          {
+            type: "command",
+            label: "Войти в GitHub CLI",
+            code: "gh auth login",
+            note: "Выберите GitHub.com, HTTPS и вход через браузер. После завершения проверьте, что авторизация прошла успешно.",
+          },
+          { type: "command", label: "Проверить авторизацию GitHub", code: "gh auth status" },
+        ],
       },
       {
-        title: "Install Node.js and Python",
-        text: "Node powers the React frontend. Python powers the bridge service between React and 1C.",
-        code: `winget install --id OpenJS.NodeJS.LTS --source winget
-winget install --id Python.Python.3.12 --source winget`,
+        title: "Установите Node.js и Python",
+        text: "Node.js нужен для React-фронтенда. Python нужен для FastAPI bridge между React и 1С.",
+        content: [
+          { type: "command", label: "Установить Node.js LTS", code: "winget install --id OpenJS.NodeJS.LTS --source winget" },
+          { type: "command", label: "Установить Python", code: "winget install --id Python.Python.3.12 --source winget" },
+          { type: "command", label: "Проверить Node.js", code: "node --version" },
+          { type: "command", label: "Проверить npm", code: "npm --version" },
+          { type: "command", label: "Проверить Python", code: "python --version" },
+          { type: "command", label: "Проверить Python через py", code: "py --version" },
+          {
+            type: "note",
+            text: "После установки Node.js или Python перезапустите PowerShell, если команда ещё не распознаётся.",
+          },
+        ],
       },
       {
-        title: "Install AI coding CLIs",
-        text: "Use Codex and Claude from the project root so each tool can inspect the same architecture.",
-        code: `npm install -g @openai/codex
-npm install -g @anthropic-ai/claude-code
-codex --login
-claude doctor`,
+        title: "Установите Codex CLI",
+        text: "Codex CLI помогает анализировать проект, изменять код, запускать проверки и работать с Git из корня репозитория.",
+        content: [
+          { type: "command", label: "Установить Codex CLI", code: "npm install -g @openai/codex" },
+          { type: "command", label: "Войти в Codex через ChatGPT", code: "codex login" },
+          { type: "command", label: "Проверить авторизацию Codex", code: "codex login status" },
+          { type: "links", links: [{ label: "Официальная авторизация Codex", href: "https://chatgpt.com/" }] },
+          {
+            type: "note",
+            text: "Для входа через подписку откройте ChatGPT в браузере и используйте тот же аккаунт при авторизации Codex CLI. API-ключи и API-биллинг относятся к отдельному способу доступа.",
+          },
+        ],
+      },
+      {
+        title: "Установите Claude Code",
+        text: "Claude Code — альтернативный AI coding agent для анализа проекта, написания кода и проверки изменений.",
+        content: [
+          { type: "command", label: "Установить Claude Code", code: "npm install -g @anthropic-ai/claude-code" },
+          {
+            type: "command",
+            label: "Запустить вход в Claude Code",
+            code: "claude",
+            note: "При первом запуске Claude Code откроет браузер. Войдите через аккаунт Claude и вернитесь в PowerShell.",
+          },
+          { type: "links", links: [{ label: "Открыть Claude", href: "https://claude.ai/" }] },
+          { type: "command", label: "Проверить установку Claude Code", code: "claude doctor" },
+          { type: "links", links: [{ label: "Официальная инструкция Claude Code", href: "https://code.claude.com/docs/en/authentication" }] },
+        ],
+      },
+      {
+        title: "Проверьте установку",
+        content: [
+          { type: "command", label: "Проверить Git", code: "git --version" },
+          { type: "command", label: "Проверить GitHub CLI", code: "gh --version" },
+          { type: "command", label: "Проверить Node.js", code: "node --version" },
+          { type: "command", label: "Проверить Python", code: "python --version" },
+          { type: "command", label: "Проверить Codex CLI", code: "codex --version" },
+          { type: "command", label: "Проверить Claude Code", code: "claude --version" },
+          {
+            type: "note",
+            text: "Если все команды выполнились без ошибки, компьютер готов к созданию первого проекта. В следующем уроке мы создадим репозиторий и настроим стандартную структуру проекта.",
+          },
+        ],
       },
     ],
   },
@@ -246,27 +302,253 @@ git push -u origin main`,
     id: "lesson-04",
     group: "Getting started",
     number: "04",
-    title: "Публикация на GitHub Pages",
-    subtitle: "Turn the lesson repository into a public documentation website.",
-    minutes: "12 мин",
+    title: "Командная работа в GitHub",
+    subtitle: "Научитесь выполнять задачу через Issue, отдельную ветку, Pull Request, ревью и безопасное объединение изменений.",
+    minutes: "25 мин",
     level: "Начальный",
     complete: false,
-    need: ["GitHub repository", "Main branch", "Pages permission"],
-    goal: "your lessons will be accessible from a public GitHub Pages URL.",
+    need: ["Git и GitHub CLI", "Настроенный репозиторий", "Права на создание Pull Request"],
+    goal: "вы сможете взять задачу, создать ветку, отправить изменения в GitHub, открыть Pull Request, пройти ревью, выполнить merge и безопасно отменить ошибочный коммит.",
     steps: [
       {
-        title: "Enable Pages",
-        text: "Use GitHub CLI to enable Pages from the main branch root.",
-        code: `gh api --method POST repos/<user>/<repo>/pages -f "source[branch]=main" -f "source[path]=/"`,
+        title: "Начните с актуальной ветки main",
+        text: "Перед каждой новой задачей обновите локальную ветку main. Не начинайте работу со старой версии проекта.",
+        content: [
+          { type: "command", label: "Перейти в папку проекта", code: "cd путь\\к\\проекту" },
+          { type: "command", label: "Проверить состояние проекта", code: "git status" },
+          { type: "command", label: "Перейти в main", code: "git switch main" },
+          {
+            type: "command",
+            label: "Получить изменения из GitHub",
+            code: "git pull --ff-only origin main",
+            note: "Если в рабочей папке есть незаписанные изменения, сначала сохраните их в предыдущей ветке или временно уберите в stash. Не удаляйте изменения другой задачи.",
+          },
+        ],
       },
       {
-        title: "Open the site",
-        text: "The first build may take a few minutes.",
-        code: "https://<github-user>.github.io/<repository-name>/",
+        title: "Создайте Issue и отдельную ветку",
+        text: "Одна задача должна иметь одну Issue, одну рабочую ветку и один Pull Request. Ветка main используется для согласованного состояния проекта.",
+        content: [
+          {
+            type: "snippet",
+            label: "Пример Issue",
+            body: `Название: Добавить поиск товаров
+
+Что нужно сделать:
+- добавить поле поиска в реестр товаров;
+- передавать поисковую строку в API;
+- показать пустой результат;
+- сохранить текущий стиль интерфейса.
+
+Критерий готовности:
+- поиск работает на desktop и mobile;
+- существующие сценарии не сломались;
+- проверка описана в Pull Request.`,
+          },
+          { type: "command", label: "Создать ветку задачи", code: "git switch -c feat/product-search" },
+          {
+            type: "snippet",
+            label: "Правило именования веток",
+            body: `Используйте формат:
+feat/название-функции
+fix/название-ошибки
+docs/название-документации`,
+          },
+          {
+            type: "snippet",
+            label: "Примеры названий веток",
+            body: `feat/product-search
+fix/login-error
+docs/setup-guide`,
+          },
+        ],
       },
       {
-        title: "Update lessons through Git",
-        text: "Every pushed change to the main branch rebuilds the GitHub Pages site.",
+        title: "Проверьте изменения перед коммитом",
+        content: [
+          { type: "command", label: "Проверить изменённые файлы", code: "git status" },
+          { type: "command", label: "Посмотреть изменения", code: "git diff" },
+          { type: "command", label: "Добавить выбранный файл", code: "git add путь\\к\\файлу" },
+          { type: "command", label: "Проверить подготовленные изменения", code: "git diff --staged" },
+          { type: "command", label: "Создать коммит", code: `git commit -m "feat: add product search"` },
+          {
+            type: "note",
+            text: "Коммит должен описывать одно логическое изменение. Не добавляйте в него секреты, рабочие .env-файлы, node_modules, виртуальное окружение Python и случайные изменения других задач.",
+          },
+        ],
+      },
+      {
+        title: "Отправьте ветку в удалённый репозиторий",
+        content: [
+          { type: "command", label: "Отправить новую ветку", code: "git push -u origin feat/product-search" },
+          { type: "command", label: "Проверить ветку на GitHub", code: "gh browse" },
+          {
+            type: "note",
+            text: "После push ветка появляется в GitHub. Ветка main ещё не изменена — изменения попадут туда только после Pull Request и merge.",
+          },
+        ],
+      },
+      {
+        title: "Создайте Pull Request через GitHub",
+        content: [
+          {
+            type: "steps",
+            items: [
+              "Откройте репозиторий GitHub.",
+              "Перейдите во вкладку Pull requests.",
+              "Нажмите New pull request.",
+              "В качестве base выберите main.",
+              "В качестве compare выберите свою ветку.",
+              "Проверьте список изменённых файлов.",
+              "Заполните описание: что требовалось, что изменилось, как проверялось локально и какие ограничения остались.",
+              "Свяжите Pull Request с Issue.",
+              "Нажмите Create pull request.",
+            ],
+          },
+          {
+            type: "snippet",
+            label: "Шаблон описания Pull Request",
+            body: `## Что сделано
+
+-
+
+## Как проверено
+
+-
+
+## Связанная задача
+
+Closes #
+
+## Что не проверено
+
+- `,
+          },
+          {
+            type: "command",
+            label: "Создать Pull Request через GitHub CLI",
+            code: "gh pr create --base main --head feat/product-search --web",
+          },
+        ],
+      },
+      {
+        title: "Проверьте Pull Request",
+        text: "Автор задачи проверяет, что интерфейс и API работают. Другой участник команды проверяет diff, границы изменения, обработку ошибок и соответствие Issue.",
+        content: [
+          {
+            type: "steps",
+            items: [
+              "Откройте вкладку Files changed.",
+              "Проверьте, что нет случайных файлов.",
+              "Проверьте ошибки и пустые состояния.",
+              "Проверьте, что секреты не попали в коммит.",
+              "Проверьте desktop и mobile.",
+              "Оставьте комментарий к конкретной строке.",
+              "Нажмите Approve или Request changes.",
+            ],
+          },
+          { type: "command", label: "Посмотреть список Pull Request", code: "gh pr list" },
+          { type: "command", label: "Посмотреть изменения Pull Request", code: "gh pr diff" },
+          { type: "command", label: "Проверить статус Pull Request", code: "gh pr checks" },
+          { type: "command", label: "Открыть Pull Request в браузере", code: "gh pr view --web" },
+          {
+            type: "note",
+            text: "Автор не должен самостоятельно подтверждать собственный Pull Request, если в проекте есть другой участник для ревью.",
+          },
+        ],
+      },
+      {
+        title: "Исправьте замечания и объедините изменения",
+        text: "Если ревьюер оставил замечания, исправьте их в той же ветке. Новый push автоматически обновит существующий Pull Request.",
+        content: [
+          { type: "command", label: "Отправить исправления", code: "git push" },
+          {
+            type: "note",
+            text: "После одобрения Pull Request объединяется через сайт GitHub. В учебном проекте используйте Squash and merge.",
+          },
+          {
+            type: "command",
+            label: "Объединить одобренный Pull Request через CLI",
+            code: "gh pr merge --squash --delete-branch",
+          },
+          {
+            type: "note",
+            text: "После merge обновите локальную main и только затем начинайте следующую задачу.",
+          },
+          { type: "command", label: "Перейти в main", code: "git switch main" },
+          { type: "command", label: "Получить объединённые изменения", code: "git pull --ff-only origin main" },
+        ],
+      },
+      {
+        title: "Откатите ошибочный коммит",
+        text: "Для уже опубликованного коммита используйте git revert. Он создаёт новый коммит, отменяющий ошибочное изменение, и сохраняет историю проекта.",
+        content: [
+          { type: "command", label: "Посмотреть историю", code: "git log --oneline" },
+          { type: "command", label: "Создать коммит отмены", code: "git revert <commit-hash>" },
+          { type: "command", label: "Отправить откат в GitHub", code: "git push origin main" },
+          {
+            type: "note",
+            text: "Не используйте git reset --hard и git push --force для общей ветки main в рамках этого урока. Они могут удалить историю и изменения других участников.",
+          },
+          {
+            type: "steps",
+            items: [
+              "Создать Issue «Откатить ошибочное изменение».",
+              "Создать ветку fix/revert-product-search.",
+              "Выполнить git revert.",
+              "Отправить ветку.",
+              "Открыть Pull Request.",
+              "Провести ревью.",
+              "Выполнить merge.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Разрешите конфликт слияния",
+        text: "Конфликт возникает, когда две ветки изменили один и тот же фрагмент. Нельзя автоматически выбирать всю свою или всю чужую версию — итог нужно согласовать по смыслу задачи.",
+        content: [
+          { type: "command", label: "Получить сведения об удалённых ветках", code: "git fetch origin" },
+          { type: "command", label: "Объединить актуальную main в свою ветку", code: "git merge origin/main" },
+          {
+            type: "steps",
+            items: [
+              "Откройте файл с маркерами конфликта.",
+              "Сохраните правильный итоговый вариант.",
+              "Удалите маркеры <<<<<<<, =======, >>>>>>>.",
+              "Проверьте результат через git diff.",
+              "Запустите локальные проверки.",
+              "Добавьте исправленный файл.",
+              "Создайте коммит merge.",
+              "Отправьте ветку через git push.",
+            ],
+          },
+          { type: "command", label: "Добавить исправленный файл", code: "git add путь\\к\\файлу" },
+          { type: "command", label: "Завершить merge-коммит", code: `git commit -m "fix: resolve merge conflict"` },
+          { type: "command", label: "Отправить разрешённый конфликт", code: "git push" },
+          { type: "command", label: "Отменить незавершённый merge", code: "git merge --abort" },
+        ],
+      },
+      {
+        title: "Итоговый чек-лист",
+        content: [
+          {
+            type: "checklist",
+            items: [
+              "Я создал Issue.",
+              "Я создал отдельную ветку от актуальной main.",
+              "Я проверил git diff перед коммитом.",
+              "Я отправил ветку в GitHub.",
+              "Я открыл Pull Request через сайт или GitHub CLI.",
+              "Другой участник проверил изменения.",
+              "Я исправил замечания в той же ветке.",
+              "Pull Request объединён через Squash and merge.",
+              "Я умею обновить локальную main.",
+              "Я умею отменить ошибочный коммит через git revert.",
+              "Я понимаю, как разрешается merge conflict.",
+            ],
+          },
+        ],
       },
     ],
   },
@@ -675,7 +957,7 @@ function renderArticle() {
     button.addEventListener("click", async () => {
       await navigator.clipboard.writeText(button.dataset.copy);
       const oldText = button.querySelector("span").textContent;
-      button.querySelector("span").textContent = "Copied";
+      button.querySelector("span").textContent = "Скопировано";
       window.setTimeout(() => {
         button.querySelector("span").textContent = oldText;
       }, 1000);
@@ -686,30 +968,89 @@ function renderArticle() {
 function renderStep(lesson) {
   return (step, index) => {
     const stepId = `${lesson.id}-step-${index + 1}`;
+    const body = step.content
+      ? step.content.map(renderBlock).join("")
+      : `
+        ${step.code ? renderCode(step.code) : ""}
+        ${step.ai ? renderAi(step.ai) : ""}
+        ${step.info ? renderInfo(step.info) : ""}
+        ${step.link ? renderLink(step.link) : ""}
+        ${step.links ? renderLinks(step.links) : ""}
+      `;
     return `
       <section class="step" id="${stepId}">
         <div class="step-number">${index + 1}</div>
         <div>
           <h2>${step.title}</h2>
-          <p>${step.text}</p>
-          ${step.code ? renderCode(step.code) : ""}
-          ${step.ai ? renderAi(step.ai) : ""}
-          ${step.info ? renderInfo(step.info) : ""}
-          ${step.link ? renderLink(step.link) : ""}
-          ${step.links ? renderLinks(step.links) : ""}
+          ${step.text ? `<p>${step.text}</p>` : ""}
+          ${body}
         </div>
       </section>
     `;
   };
 }
 
-function renderCode(code) {
+function renderBlock(block) {
+  switch (block.type) {
+    case "command":
+      return renderCommand(block);
+    case "snippet":
+      return renderSnippet(block);
+    case "note":
+      return renderNote(block.text);
+    case "steps":
+      return renderOrderedSteps(block.items);
+    case "checklist":
+      return renderChecklist(block.items);
+    case "links":
+      return renderLinks(block.links);
+    default:
+      return "";
+  }
+}
+
+function renderCommand(block) {
+  return `
+    <p class="command-label">${escapeHtml(block.label)}</p>
+    ${renderCode(block.code, "PowerShell")}
+    ${block.note ? `<p class="command-note">${escapeHtml(block.note)}</p>` : ""}
+  `;
+}
+
+function renderSnippet(block) {
+  return `
+    ${block.label ? `<p class="command-label">${escapeHtml(block.label)}</p>` : ""}
+    ${renderCode(block.body, "Пример")}
+  `;
+}
+
+function renderNote(text) {
+  return `
+    <div class="note-card">
+      <p>${escapeHtml(text)}</p>
+    </div>
+  `;
+}
+
+function renderOrderedSteps(items) {
+  return `<ol class="step-instructions">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>`;
+}
+
+function renderChecklist(items) {
+  return `
+    <div class="info-card">
+      <ul class="need-list">${items.map((item) => `<li>${icons.check}<span>${escapeHtml(item)}</span></li>`).join("")}</ul>
+    </div>
+  `;
+}
+
+function renderCode(code, header = "PowerShell") {
   const escaped = escapeHtml(code);
   return `
     <div class="code-card">
       <div class="code-card-header">
-        <span>Terminal</span>
-        <button class="copy-button" type="button" data-copy="${escapeAttribute(code)}">${icons.copy}<span>Copy</span></button>
+        <span>${escapeHtml(header)}</span>
+        <button class="copy-button" type="button" data-copy="${escapeAttribute(code)}">${icons.copy}<span>Копировать</span></button>
       </div>
       <pre><code>${escaped}</code></pre>
     </div>
@@ -724,7 +1065,7 @@ function renderAi(prompt) {
         <h3>Try with your AI agent</h3>
         <p>${escapeHtml(prompt)}</p>
       </div>
-      <button class="copy-button" type="button" data-copy="${escapeAttribute(prompt)}">${icons.copy}<span>Copy</span></button>
+      <button class="copy-button" type="button" data-copy="${escapeAttribute(prompt)}">${icons.copy}<span>Копировать</span></button>
     </div>
   `;
 }
